@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Playfair Display", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Premium Dark Gold Palette */
+  --color-gold: #C9922A;
+  --color-gold-light: #F5D98E;
+  --color-gold-pale: #FDF5E2;
+  --color-dark: #0D0F14;
+  --color-dark-2: #161A22;
+  --color-dark-3: #1E2330;
+  --color-muted: #8A90A0;
+  --color-text: #E8EAF0;
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-dark text-text selection:bg-gold selection:text-dark;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight text-white;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-8 py-3 bg-gold text-dark font-bold rounded-lg transition-all hover:scale-[1.02] hover:opacity-90 active:scale-[0.98];
+  }
+  
+  .btn-ghost {
+    @apply px-8 py-3 bg-transparent text-text border border-white/15 rounded-lg active:scale-[0.98] transition-all hover:border-gold hover:text-gold;
+  }
+
+  .btn-book {
+    @apply flex items-center justify-center px-6 py-2 bg-gold/15 text-gold border border-gold/20 rounded-lg font-bold text-xs hover:bg-gold hover:text-dark transition-all active:scale-95;
+  }
+
+  .card-premium {
+    @apply bg-[#181D28] border border-gold/15 rounded-[14px] overflow-hidden transition-all hover:-translate-y-1 hover:border-gold/40;
+  }
+
+  .section-tag {
+    @apply inline-block bg-gold/10 text-gold text-[10px] sm:text-[11px] font-bold tracking-[0.15em] uppercase px-4 py-1.5 rounded-full border border-gold/15 mb-6;
+  }
+}
