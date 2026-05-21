@@ -60,7 +60,7 @@ export default function Header({ user, onAuthClick, onLogout }: HeaderProps) {
               onClick={onAuthClick}
               className="px-6 py-2.5 bg-gold text-dark font-bold text-sm rounded-lg hover:shadow-xl hover:shadow-gold/20 transition-all"
             >
-              Partner with Us
+              Log in / Sign up
             </button>
           )}
         </div>

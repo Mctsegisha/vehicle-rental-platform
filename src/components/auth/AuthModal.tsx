@@ -1,8 +1,10 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Mail, Lock, User, Phone, Briefcase } from 'lucide-react';
+import { X, Mail, Lock, User, Phone, Briefcase, CheckCircle2 } from 'lucide-react';
 import { userService } from '../../services/userService';
 import { UserProfile, UserRole } from '../../types';
+import TermsModal from './TermsModal';
+import TermsModalProvider from './TermsModalProvider';
 
 interface AuthModalProps {
   onClose: () => void;
@@ -13,6 +15,9 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showTerms, setShowTerms] = useState(false);
+  const [showProviderTerms, setShowProviderTerms] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -21,10 +26,28 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     role: 'customer' as UserRole
   });
 
+  // Reset accepted terms when switching roles or login/signup
+  useEffect(() => {
+    setAcceptedTerms(false);
+  }, [formData.role, isLogin]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    if (!isLogin) {
+      if (formData.role === 'customer' && !acceptedTerms) {
+        setError('You must accept the Vehicle Rental Terms & Conditions to register as a Guest.');
+        setLoading(false);
+        return;
+      }
+      if (formData.role === 'owner' && !acceptedTerms) {
+        setError('You must accept the Provider Terms & Conditions to register as a Provider.');
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       if (isLogin) {
@@ -44,6 +67,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <motion.div 
+        key="auth-modal-backdrop"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -52,6 +76,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
       />
       
       <motion.div 
+        key="auth-modal-container"
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className="relative bg-dark-2 w-full max-w-md rounded-[14px] shadow-2xl overflow-y-auto max-h-[90vh] border border-gold/15"
@@ -134,6 +159,33 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
               />
             </div>
 
+            {!isLogin && (
+              <div className="pt-2 px-1">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative flex items-center justify-center mt-0.5">
+                    <input 
+                      type="checkbox" 
+                      className="peer sr-only"
+                      checked={acceptedTerms}
+                      onChange={e => setAcceptedTerms(e.target.checked)}
+                    />
+                    <div className="w-5 h-5 border-2 border-white/10 rounded group-hover:border-gold/50 peer-checked:border-gold peer-checked:bg-gold transition-all" />
+                    <CheckCircle2 className="absolute w-3.5 h-3.5 text-dark opacity-0 peer-checked:opacity-100 transition-opacity" />
+                  </div>
+                  <span className="text-[11px] text-muted font-bold tracking-tight leading-relaxed select-none">
+                    I have read and agree to the{' '}
+                    <button 
+                      type="button"
+                      onClick={() => formData.role === 'customer' ? setShowTerms(true) : setShowProviderTerms(true)}
+                      className="text-gold hover:underline underline-offset-2"
+                    >
+                      {formData.role === 'customer' ? 'Vehicle Rental Terms & Conditions' : 'Provider Terms & Conditions'}
+                    </button>
+                  </span>
+                </label>
+              </div>
+            )}
+
             {error && (
               <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest bg-red-500/10 border border-red-500/20 p-3 rounded-lg text-center">{error}</p>
             )}
@@ -164,6 +216,8 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
           </p>
         </div>
       </motion.div>
+      <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
+      <TermsModalProvider isOpen={showProviderTerms} onClose={() => setShowProviderTerms(false)} />
     </div>
   );
 }

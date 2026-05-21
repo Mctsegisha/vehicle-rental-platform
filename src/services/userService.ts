@@ -50,6 +50,10 @@ export const userService = {
     return apiFetch('/owner/verification-requests');
   },
 
+  async getMyVerificationRequests(): Promise<any[]> {
+    return apiFetch('/auth/profile/verification-requests');
+  },
+
   async updateVerificationRequestStatus(id: number, status: 'approved' | 'rejected'): Promise<any> {
     return apiFetch(`/owner/verification-requests/${id}/status`, {
       method: 'PUT',

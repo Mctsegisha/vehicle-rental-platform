@@ -32,7 +32,7 @@ export default function Vehicles({ user, onAuthClick }: VehiclesProps) {
       const min = minPrice ? parseFloat(minPrice) : undefined;
       const max = maxPrice ? parseFloat(maxPrice) : undefined;
       const data = await vehicleService.getAllVehicles(statusFilter, categoryFilter, min, max);
-      setVehicles(data);
+      setVehicles(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err: any) {
       console.error('Failed to fetch vehicles:', err);
@@ -46,7 +46,7 @@ export default function Vehicles({ user, onAuthClick }: VehiclesProps) {
     const fetchInitialData = async () => {
       try {
         const cats = await vehicleService.getCategories();
-        setCategories(cats);
+        setCategories(Array.isArray(cats) ? cats : []);
       } catch (err) {
         console.error('Failed to fetch categories:', err);
       }
@@ -95,7 +95,7 @@ export default function Vehicles({ user, onAuthClick }: VehiclesProps) {
         <p className="text-gray-500 mb-8">{error}</p>
         <button 
           onClick={() => window.location.reload()}
-          className="px-8 py-3 bg-brand-primary text-white rounded-full font-bold hover:opacity-90 transition-all"
+          className="px-8 py-3 bg-gold text-dark rounded-full font-bold hover:opacity-90 transition-all"
         >
           Try Again
         </button>
@@ -121,12 +121,12 @@ export default function Vehicles({ user, onAuthClick }: VehiclesProps) {
         <div className="bg-dark-2 p-6 sm:p-8 rounded-[14px] border border-gold/15 shadow-2xl">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
             <div className="space-y-3">
-              <label className="text-[11px] font-bold text-muted uppercase tracking-widest ml-1">Location / City</label>
+              <label className="text-[11px] font-bold text-muted uppercase tracking-widest ml-1">Search Fleet</label>
               <div className="relative group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-gold transition-colors" />
                 <input 
                   type="text" 
-                  placeholder="e.g. Addis Ababa"
+                  placeholder="e.g. Toyota Corolla"
                   className="w-full pl-11 pr-4 py-3.5 bg-dark-3 text-white border border-white/5 rounded-lg focus:border-gold outline-none transition-all placeholder:text-muted/40 text-sm font-medium"
                   value={filter}
                   onChange={e => setFilter(e.target.value)}
@@ -152,7 +152,7 @@ export default function Vehicles({ user, onAuthClick }: VehiclesProps) {
               <label className="text-[11px] font-bold text-muted uppercase tracking-widest ml-1">Min Price (ETB)</label>
               <input 
                 type="number" 
-                placeholder="e.g. 500"
+                placeholder="0"
                 className="w-full px-5 py-3.5 bg-dark-3 text-white border border-white/5 rounded-lg focus:border-gold outline-none transition-all placeholder:text-muted/40 text-sm font-medium"
                 value={minPrice}
                 onChange={e => setMinPrice(e.target.value)}
@@ -163,7 +163,7 @@ export default function Vehicles({ user, onAuthClick }: VehiclesProps) {
               <label className="text-[11px] font-bold text-muted uppercase tracking-widest ml-1">Max Price (ETB)</label>
               <input 
                 type="number" 
-                placeholder="e.g. 2000"
+                placeholder="5000"
                 className="w-full px-5 py-3.5 bg-dark-3 text-white border border-white/5 rounded-lg focus:border-gold outline-none transition-all placeholder:text-muted/40 text-sm font-medium"
                 value={maxPrice}
                 onChange={e => setMaxPrice(e.target.value)}
@@ -222,7 +222,7 @@ export default function Vehicles({ user, onAuthClick }: VehiclesProps) {
                 setMaxPrice('');
                 setCategoryFilter('all');
               }}
-              className="btn-primary"
+              className="px-8 py-3 bg-gold text-dark rounded-full font-bold hover:scale-105 transition-all"
             >
               Clear Filters
             </button>

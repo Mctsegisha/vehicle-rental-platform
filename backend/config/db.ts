@@ -10,8 +10,6 @@ const connectionString = process.env.DATABASE_URL || "postgresql://postgres:s1vW
 if (connectionString) {
   const maskedUrl = connectionString.replace(/:[^@:]+@/, ':****@');
   console.log('Initializing Database Pool with:', maskedUrl.substring(0, 50) + '...');
-} else {
-  console.error('CRITICAL: DATABASE_URL is missing in environment variables and fallback!');
 }
 
 const pool = new Pool({
@@ -19,7 +17,6 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Better error handling for the pool
 pool.on('error', (err) => {
   console.error('Unexpected error on idle database client', err);
 });

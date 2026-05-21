@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, MapPin, Calendar, ArrowRight, Shield, Clock, ThumbsUp, Sparkles, Car,
   ShieldCheck, Crown, Zap, BatteryCharging, Infinity, Truck, Globe, 
@@ -33,7 +33,16 @@ interface HomeProps {
 export default function Home({ user, onAuthClick }: HomeProps) {
   const [featuredVehicles, setFeaturedVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAccessDeniedModal, setShowAccessDeniedModal] = useState(false);
   const navigate = useNavigate();
+
+  const handleListCarClick = () => {
+    if (!user || user.role !== 'owner') {
+      setShowAccessDeniedModal(true);
+    } else {
+      navigate('/dashboard');
+    }
+  };
 
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -48,6 +57,20 @@ export default function Home({ user, onAuthClick }: HomeProps) {
     };
     fetchFeatured();
   }, []);
+
+  const handleBook = (vehicle: Vehicle) => {
+    if (!user) {
+      onAuthClick();
+      return;
+    }
+
+    if (user.role !== 'customer') {
+      alert('Only Customer accounts can book vehicles. Please log in with a customer account.');
+      return;
+    }
+
+    navigate('/vehicles');
+  };
 
   return (
     <div className="bg-dark space-y-24 pb-24">
@@ -83,10 +106,7 @@ export default function Home({ user, onAuthClick }: HomeProps) {
                   Browse Vehicles
                 </button>
                 <button 
-                  onClick={() => {
-                    if (user) navigate('/dashboard');
-                    else onAuthClick();
-                  }}
+                  onClick={handleListCarClick}
                   className="btn-ghost"
                 >
                   List Your Car
@@ -212,7 +232,7 @@ export default function Home({ user, onAuthClick }: HomeProps) {
               <VehicleCard 
                 key={`featured-vehicle-${vehicle.id}-${index}`} 
                 vehicle={vehicle} 
-                onBook={(_v) => navigate('/vehicles')} 
+                onBook={handleBook} 
               />
             ))}
           </div>
@@ -246,10 +266,7 @@ export default function Home({ user, onAuthClick }: HomeProps) {
               List Your <br className="hidden md:block"/> Vehicle Today.
             </h2>
             <button 
-              onClick={() => {
-                if (user) navigate('/dashboard');
-                else onAuthClick();
-              }}
+              onClick={handleListCarClick}
               className="btn-primary"
             >
               List Your Car
@@ -280,6 +297,81 @@ export default function Home({ user, onAuthClick }: HomeProps) {
           © 2026 <span className="text-gold font-bold">DriveFleet</span> · Built for Addis Ababa University School of Commerce · All rights reserved.
         </p>
       </footer>
+
+      {/* Access Denied Modal for Non-Providers / Guests */}
+      <AnimatePresence>
+        {showAccessDeniedModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAccessDeniedModal(false)}
+              className="fixed inset-0 bg-dark/80 backdrop-blur-md"
+            />
+            
+            {/* Modal Body */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-dark-2 max-w-md w-full border border-gold/20 p-8 rounded-3xl shadow-2xl relative z-10 text-center space-y-6"
+            >
+              {/* Warning/Security Indicator */}
+              <div className="w-16 h-16 bg-gold/10 border border-gold/20 rounded-full flex items-center justify-center mx-auto text-gold">
+                <Car className="w-8 h-8" />
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-2xl font-display font-black text-white uppercase tracking-tight">Provider Access Required</h3>
+                <div className="text-xs text-muted/80 uppercase tracking-widest font-bold">List Cars Feature</div>
+              </div>
+              
+              <div className="space-y-4 text-sm text-muted font-medium leading-relaxed">
+                <p>
+                  Only registered car providers can list vehicles on the platform.
+                </p>
+                <div className="px-4 py-3 bg-white/5 border border-white/5 rounded-xl text-gold text-xs font-bold font-mono">
+                  “Please sign up or switch to a provider account to continue.”
+                </div>
+              </div>
+              
+              <div className="pt-4 flex flex-col gap-3">
+                {!user ? (
+                  <button
+                    onClick={() => {
+                      setShowAccessDeniedModal(false);
+                      onAuthClick();
+                    }}
+                    className="w-full py-4 bg-gold text-dark font-black uppercase tracking-widest text-[10px] rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-gold/10"
+                  >
+                    Log In / Register Now
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setShowAccessDeniedModal(false);
+                      localStorage.removeItem('token');
+                      window.location.reload();
+                    }}
+                    className="w-full py-4 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 font-black uppercase tracking-widest text-[10px] rounded-xl hover:scale-[1.02] active:scale-95 transition-all"
+                  >
+                    Switch Account (Sign Out)
+                  </button>
+                )}
+                
+                <button
+                  onClick={() => setShowAccessDeniedModal(false)}
+                  className="w-full py-4 bg-white/5 text-muted hover:text-white border border-white/5 font-black uppercase tracking-widest text-[10px] rounded-xl transition-all"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

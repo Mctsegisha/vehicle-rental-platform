@@ -29,19 +29,25 @@ export const vehicleService = {
       body: formData
     });
 
+    const contentType = response.headers.get('content-type');
     if (!response.ok) {
-      const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const error = await response.json();
         throw new Error(error.error || 'Upload failed');
       } else {
         const text = await response.text();
-        console.error('Upload failed with non-json response:', text);
-        throw new Error(`Upload failed with status ${response.status}. Please check server logs.`);
+        console.error('Upload failed with status:', response.status, text);
+        throw new Error(`Upload failed (${response.status}). Please try again later.`);
       }
     }
 
-    return response.json();
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    } else {
+      const text = await response.text();
+      console.error('Upload succeeded but returned non-JSON:', text);
+      throw new Error('Upload succeeded but received invalid response from server.');
+    }
   },
 
   async addVehicle(vehicle: any): Promise<Vehicle> {

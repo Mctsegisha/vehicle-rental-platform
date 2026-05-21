@@ -68,8 +68,8 @@ export default function BookingModal({ vehicle, isOpen, user: propUser, onClose,
   const handleProceedToPayment = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user?.isVerified) {
-      setError('Your account is not verified. Please go to your dashboard to complete verification.');
+    if (!user?.isVerified || !user?.age) {
+      setError('Your account verification is incomplete or you are missing age information. Please complete your profile verification.');
       return;
     }
 
@@ -104,18 +104,14 @@ export default function BookingModal({ vehicle, isOpen, user: propUser, onClose,
     setError(null);
 
     try {
-      // 1. Create the booking (default status is 'pending' in backend usually, or 'confirmed')
-      const booking = await bookingService.createBooking({
+      // 1. Create the booking with payment details in one go to avoid multi-step failures
+      await bookingService.createBooking({
         vehicleId: vehicle.id,
         startDate,
         endDate,
-        totalAmount: calculateTotal()
-      });
-
-      // 2. Mock payment verification request (record the payment)
-      // Since we don't have a direct "submit payment" service for existing bookings yet, 
-      // we'll simulate the flow of marking it as paid.
-      await bookingService.updateBookingStatus(booking.id, 'paid', transactionRef);
+        totalAmount: calculateTotal(),
+        payment_reference: transactionRef
+      } as any);
 
       setStep('success');
       setTimeout(() => {
@@ -138,8 +134,9 @@ export default function BookingModal({ vehicle, isOpen, user: propUser, onClose,
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div key={`booking-modal-overlay-outer-${vehicle.id}`} className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <motion.div
+            key={`booking-modal-backdrop-${vehicle.id}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -148,6 +145,7 @@ export default function BookingModal({ vehicle, isOpen, user: propUser, onClose,
           />
           
           <motion.div
+            key={`booking-modal-container-${vehicle.id}`}
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -349,17 +347,17 @@ export default function BookingModal({ vehicle, isOpen, user: propUser, onClose,
                         <AlertCircle className="w-4 h-4 flex-shrink-0" />
                         Role Restricted
                       </div>
-                      <p className="text-[11px] font-medium opacity-70">Only Customer accounts can book vehicles. Your current profile ({user.role}) is not authorized for rentals.</p>
+                      <p className="text-[11px] font-medium opacity-70">Only Customer accounts can book vehicles. Please log in with a customer account.</p>
                     </div>
                   )}
 
-                  {user && user.role === 'customer' && !user.isVerified && (
+                  {user && user.role === 'customer' && (!user.isVerified || !user.age) && (
                     <div key="booking-verify-warning" className="p-4 bg-gold/5 border border-gold/20 text-gold rounded-xl flex flex-col gap-2">
                       <div className="flex items-center gap-2 font-bold text-sm">
                         <ShieldAlert className="w-4 h-4 flex-shrink-0" />
                         Verification Required
                       </div>
-                      <p className="text-[11px] font-medium opacity-70">You must be verified to book a rental. Please complete verification in your dashboard.</p>
+                      <p className="text-[11px] font-medium opacity-70">You must be fully verified and 21+ to book a rental. Please complete verification in your dashboard.</p>
                       <button
                         type="button"
                         onClick={() => setIsVerificationModalOpen(true)}

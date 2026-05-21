@@ -45,7 +45,7 @@ export default function VehicleCard({ vehicle, onBook }: VehicleCardProps) {
           {images.length > 0 ? (
             <AnimatePresence mode="wait">
               <motion.img 
-                key={currentImageIndex}
+                key={`vehicle-card-img-${vehicle.id}-${currentImageIndex}`}
                 src={images[currentImageIndex]} 
                 alt={`${vehicle.name} - ${currentImageIndex + 1}`} 
                 initial={{ opacity: 0 }}

@@ -33,6 +33,11 @@ export interface Vehicle {
   createdAt: string;
   averageRating?: number;
   reviewCount?: number;
+  plateNumber?: string;
+  ownershipBookUrl?: string;
+  insuranceCertUrl?: string;
+  nationalIdUrl?: string;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
 }
 
 export interface Review {
@@ -59,14 +64,22 @@ export interface Booking {
   category?: string;
   vehicleName?: string;
   vehicle?: Vehicle;
+  customerName?: string;
+  customerEmail?: string;
+  ownerName?: string;
+  paymentId?: number;
 }
 
 export interface Payment {
   id: number;
   bookingId: number;
   userId: number;
+  customerName?: string;
+  vehicleName?: string;
   amount: number;
-  paymentStatus: 'pending' | 'verified' | 'failed';
+  paymentStatus: 'pending' | 'verified' | 'failed' | 'rejected';
   verifiedByAdmin: boolean;
+  paymentMethod?: string;
+  paymentReference?: string;
   createdAt: string;
 }

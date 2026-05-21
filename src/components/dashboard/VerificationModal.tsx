@@ -94,6 +94,15 @@ export default function VerificationModal({ user, isOpen, targetOwnerId, onClose
     }
   };
 
+  const handleSimulate = () => {
+    setFormData({
+      age: '28',
+      driverLicenseNumber: 'DL-' + Math.random().toString(36).substring(2, 9).toUpperCase(),
+      idPhotoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=400',
+      licensePhotoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=400'
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div 
@@ -111,9 +120,18 @@ export default function VerificationModal({ user, isOpen, targetOwnerId, onClose
                <p className="text-[10px] text-muted font-bold tracking-widest uppercase mt-1">Upload Documents</p>
              </div>
           </div>
-          <button onClick={onClose} className="p-3 hover:bg-white/5 rounded-lg transition-all border border-white/5 text-muted hover:text-white">
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              type="button"
+              onClick={handleSimulate}
+              className="px-4 py-2 border border-gold/30 text-gold text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-gold/10 transition-all"
+            >
+              Simulate
+            </button>
+            <button onClick={onClose} className="p-3 hover:bg-white/5 rounded-lg transition-all border border-white/5 text-muted hover:text-white">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="p-10 space-y-10">

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { Clock, CheckCircle2, XCircle, CreditCard, ExternalLink, Star, X, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { bookingService } from '../../services/bookingService';
+import { userService } from '../../services/userService';
 import { Booking, UserProfile } from '../../types';
 import ReviewSection from '../vehicles/ReviewSection';
 import VerificationModal from './VerificationModal';
@@ -15,15 +16,21 @@ interface CustomerDashboardProps {
 export default function CustomerDashboard({ user: initialUser }: CustomerDashboardProps) {
   const [user, setUser] = useState<UserProfile>(initialUser);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [verificationRequests, setVerificationRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewingBooking, setReviewingBooking] = useState<Booking | null>(null);
   const [payingBooking, setPayingBooking] = useState<Booking | null>(null);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [bookingFilter, setBookingFilter] = useState<'all' | 'approved'>('all');
 
   const fetchBookings = async () => {
     try {
-      const data = await bookingService.getCustomerBookings();
-      setBookings(Array.isArray(data) ? data : []);
+      const [bData, vData] = await Promise.all([
+        bookingService.getCustomerBookings(),
+        userService.getMyVerificationRequests()
+      ]);
+      setBookings(Array.isArray(bData) ? bData : []);
+      setVerificationRequests(Array.isArray(vData) ? vData : []);
     } catch (err) {
       console.error('Failed to fetch bookings', err);
     } finally {
@@ -37,9 +44,16 @@ export default function CustomerDashboard({ user: initialUser }: CustomerDashboa
 
   const stats = [
     { label: 'Total Bookings', value: (bookings || []).length, icon: Clock, color: 'bg-gold/10 text-gold' },
-    { label: 'Approved Bookings', value: (bookings || []).filter(b => b.status === 'approved').length, icon: CheckCircle2, color: 'bg-green-500/10 text-green-400' },
-    { label: 'Pending Verification', value: (bookings || []).filter(b => b.status === 'pending').length, icon: Clock, color: 'bg-orange-500/10 text-orange-400' },
+    { label: 'Approved Bookings', value: (bookings || []).filter(b => ['approved', 'paid', 'confirmed'].includes(b.status)).length, icon: CheckCircle2, color: 'bg-green-500/10 text-green-400' },
+    { label: 'Pending Verifications', value: (verificationRequests || []).filter(vr => vr.status === 'pending').length, icon: Clock, color: 'bg-orange-500/10 text-orange-400' },
   ];
+
+  const filteredBookings = (bookings || []).filter(booking => {
+    if (bookingFilter === 'approved') {
+      return ['approved', 'paid', 'confirmed'].includes(booking.status);
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-12">
@@ -51,8 +65,8 @@ export default function CustomerDashboard({ user: initialUser }: CustomerDashboa
                <ShieldAlert className="w-6 h-6" />
              </div>
              <div>
-               <h3 className="font-display font-black text-white text-lg tracking-tight">Not Verified</h3>
-               <p className="text-sm text-muted mt-1">Access is limited. Complete identity verification to start booking vehicles.</p>
+                <h3 className="font-display font-black text-white text-lg tracking-tight">Not Verified</h3>
+                <p className="text-sm text-muted mt-1">Access is limited. Complete identity verification to start booking vehicles.</p>
              </div>
           </div>
           <button 
@@ -79,17 +93,76 @@ export default function CustomerDashboard({ user: initialUser }: CustomerDashboa
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stats.map((stat, i) => (
-          <div key={`customer-stat-${i}-${stat.label.replace(/\s+/g, '-').toLowerCase()}`} className="bg-dark-1 p-8 rounded-xl border border-white/5 shadow-2xl flex items-center gap-6 group hover:border-gold/20 transition-all">
-            <div className={`p-4 rounded-lg border border-white/5 group-hover:border-gold/30 transition-all ${stat.color}`}>
-              <stat.icon className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-muted uppercase tracking-widest mb-1">{stat.label}</p>
-              <p className="text-3xl font-display font-black text-white">{stat.value}</p>
+        {/* Total Bookings Card */}
+        <div 
+          onClick={() => setBookingFilter('all')}
+          className={`p-8 rounded-xl border shadow-2xl flex items-center gap-6 group hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer ${
+            bookingFilter === 'all' 
+              ? 'bg-gold/5 border-gold/40 shadow-gold/5 text-white' 
+              : 'bg-dark-1 border-white/5 hover:border-gold/25'
+          }`}
+        >
+          <div className={`p-4 rounded-lg border border-white/5 transition-all ${
+            bookingFilter === 'all' ? 'bg-gold/20 text-gold border-gold/30' : 'bg-gold/10 text-gold group-hover:border-gold/30'
+          }`}>
+            <Clock className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-muted uppercase tracking-widest mb-1">Total Bookings</p>
+            <div className="flex items-center gap-2">
+              <p className="text-3xl font-display font-black text-white">{(bookings || []).length}</p>
+              {bookingFilter === 'all' && (
+                <span className="text-[9px] font-black text-gold border border-gold/20 px-1.5 py-0.5 rounded uppercase tracking-wider bg-gold/5">Active Filter</span>
+              )}
             </div>
           </div>
-        ))}
+        </div>
+
+        {/* Approved Bookings Card */}
+        <div 
+          onClick={() => setBookingFilter('approved')}
+          className={`p-8 rounded-xl border shadow-2xl flex items-center gap-6 group hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer ${
+            bookingFilter === 'approved' 
+              ? 'bg-green-500/5 border-green-500/40 shadow-green-500/5 text-white' 
+              : 'bg-dark-1 border-white/5 hover:border-green-500/25'
+          }`}
+        >
+          <div className={`p-4 rounded-lg border border-white/5 transition-all ${
+            bookingFilter === 'approved' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-green-500/10 text-green-400 group-hover:border-green-500/30'
+          }`}>
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-muted uppercase tracking-widest mb-1">Approved Bookings</p>
+            <div className="flex items-center gap-2">
+              <p className="text-3xl font-display font-black text-white">
+                {(bookings || []).filter(b => ['approved', 'paid', 'confirmed'].includes(b.status)).length}
+              </p>
+              {bookingFilter === 'approved' && (
+                <span className="text-[9px] font-black text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded uppercase tracking-wider bg-green-500/5">Active Filter</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Pending Verifications Card */}
+        <div 
+          onClick={() => setIsVerificationModalOpen(true)}
+          className="bg-dark-1 p-8 rounded-xl border border-white/5 shadow-2xl flex items-center gap-6 group hover:border-orange-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+        >
+          <div className="p-4 rounded-lg border border-white/5 bg-orange-500/10 text-orange-400 group-hover:border-orange-500/30 transition-all">
+            <Clock className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-muted uppercase tracking-widest mb-1">Pending Verifications</p>
+            <div className="flex items-baseline gap-2">
+              <p className="text-3xl font-display font-black text-white">
+                {(verificationRequests || []).filter(vr => vr.status === 'pending').length}
+              </p>
+              <span className="text-[9px] font-black text-orange-400 border border-orange-500/20 px-1.5 py-0.5 rounded uppercase tracking-wider bg-orange-500/5 group-hover:bg-orange-500/10 transition-colors">Verify Now</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div>
@@ -107,14 +180,14 @@ export default function CustomerDashboard({ user: initialUser }: CustomerDashboa
                 <thead>
                   <tr className="border-b border-white/5 bg-white/5">
                     <th className="px-8 py-6 text-[10px] font-bold text-muted uppercase tracking-widest">Vehicle</th>
-                    <th className="px-8 py-6 text-[10px] font-bold text-muted uppercase tracking-widest">Rental Dates</th>
+                    <th className="px-8 py-6 text-[10px] font-bold text-muted uppercase tracking-widest">Booking Period</th>
                     <th className="px-8 py-6 text-[10px] font-bold text-muted uppercase tracking-widest">Total Amount</th>
                     <th className="px-8 py-6 text-[10px] font-bold text-muted uppercase tracking-widest">Status</th>
                     <th className="px-8 py-6 text-[10px] font-bold text-muted uppercase tracking-widest">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {(bookings || []).map((booking, i) => (
+                  {filteredBookings.map((booking, i) => (
                     <tr key={`customer-booking-${booking.id}-${i}`} className="hover:bg-white/5 transition-colors group">
                       <td className="px-8 py-8">
                          <div className="font-display font-black text-white group-hover:text-gold transition-colors">{booking.vehicleName || `Vehicle-${booking.vehicleId}`}</div>

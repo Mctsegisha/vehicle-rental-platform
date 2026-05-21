@@ -28,8 +28,9 @@ export default function VehicleDetailsModal({ vehicle, isOpen, onClose, onBook }
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div key={`vehicle-details-modal-overlay-${vehicle.id}`} className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <motion.div
+            key={`vehicle-details-backdrop-${vehicle.id}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -37,7 +38,7 @@ export default function VehicleDetailsModal({ vehicle, isOpen, onClose, onBook }
             className="absolute inset-0 bg-black/80 backdrop-blur-md"
           />
           <motion.div
-            key={`vehicle-details-modal-${vehicle.id}`}
+            key={`vehicle-details-modal-container-${vehicle.id}`}
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -56,7 +57,7 @@ export default function VehicleDetailsModal({ vehicle, isOpen, onClose, onBook }
                 <div className="relative w-full h-full">
                   <AnimatePresence mode="wait">
                     <motion.img
-                      key={currentImageIndex}
+                      key={`vehicle-details-img-${vehicle.id}-${currentImageIndex}`}
                       src={images[currentImageIndex]}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -175,10 +176,6 @@ export default function VehicleDetailsModal({ vehicle, isOpen, onClose, onBook }
                         <p className="text-[9px] font-bold text-muted uppercase tracking-tight flex items-center gap-1.5 leading-none">
                           <User className="w-2.5 h-2.5" />
                           Authorized Representative
-                        </p>
-                        <p className="text-xs font-bold text-gold flex items-center gap-1.5 mt-1">
-                          <Phone className="w-3 h-3" />
-                          {vehicle.ownerPhone || 'Contact Not Provided'}
                         </p>
                       </div>
                     </div>

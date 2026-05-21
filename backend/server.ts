@@ -1,20 +1,18 @@
 import dotenv from 'dotenv';
-dotenv.config({ override: true });
+import path from "path";
+dotenv.config({ path: path.join(process.cwd(), 'backend', '.env'), override: true });
 
 import express from "express";
 import { createServer as createViteServer } from "vite";
-import path from "path";
-import { fileURLToPath } from "url";
-import apiRoutes from "./src/api";
-import pool from "./src/lib/db";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import cors from "cors";
+import apiRoutes from "./routes/index";
+import pool from "./config/db";
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  app.use(cors());
   app.use(express.json());
 
   // Check DB Connection
@@ -40,6 +38,7 @@ async function startServer() {
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
+      configFile: path.resolve(process.cwd(), 'frontend/vite.config.ts'),
       server: { middlewareMode: true },
       appType: "spa",
     });

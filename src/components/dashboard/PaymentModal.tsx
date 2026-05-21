@@ -57,8 +57,9 @@ export default function PaymentModal({ booking, isOpen, onClose, onSuccess }: Pa
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div key="payment-modal-overlay-outer" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <motion.div
+            key="payment-modal-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -67,6 +68,7 @@ export default function PaymentModal({ booking, isOpen, onClose, onSuccess }: Pa
           />
 
           <motion.div
+            key={`payment-modal-container-${booking.id}`}
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}

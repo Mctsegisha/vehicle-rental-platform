@@ -30,6 +30,11 @@ CREATE TABLE Vehicles (
     availability_status VARCHAR(50) DEFAULT 'available',
     location VARCHAR(255),
     image_url VARCHAR(255),
+    plate_number VARCHAR(50),
+    ownership_book_url TEXT,
+    insurance_cert_url TEXT,
+    national_id_url TEXT,
+    approval_status VARCHAR(50) DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

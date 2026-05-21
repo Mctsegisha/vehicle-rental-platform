@@ -26,7 +26,7 @@ export default function ReviewSection({ vehicleId, canReview, bookingId, onRevie
   const fetchReviews = async () => {
     try {
       const data = await reviewService.getVehicleReviews(vehicleId);
-      setReviews(data);
+      setReviews(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch reviews', err);
     } finally {

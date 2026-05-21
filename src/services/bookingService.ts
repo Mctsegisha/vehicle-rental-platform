@@ -14,13 +14,17 @@ export const bookingService = {
   },
 
   async getOwnerBookings(): Promise<Booking[]> {
-    return apiFetch('/bookings/owner');
+    return apiFetch('/owner/bookings');
   },
 
   async updateBookingStatus(id: number | string, status: string, paymentReference?: string): Promise<void> {
-    await apiFetch(`/bookings/${id}/status`, {
-      method: 'PUT',
-      body: JSON.stringify({ status, payment_reference: paymentReference }),
+    await apiFetch(`/bookings/u-b-s`, {
+      method: 'POST',
+      body: JSON.stringify({ 
+        bookingId: id,
+        status, 
+        payment_reference: paymentReference 
+      }),
     });
   }
 };

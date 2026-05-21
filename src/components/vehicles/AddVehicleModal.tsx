@@ -23,7 +23,11 @@ export default function AddVehicleModal({ isOpen, onClose, onSuccess, vehicleToE
     transmission: 'Automatic',
     seats: '5',
     availabilityStatus: 'available',
-    images: [] as string[]
+    images: [] as string[],
+    plateNumber: '',
+    ownershipBookUrl: '',
+    insuranceCertUrl: '',
+    nationalIdUrl: '',
   });
   const [showCustomCategory, setShowCustomCategory] = useState(false);
   const [customCategory, setCustomCategory] = useState('');
@@ -41,7 +45,11 @@ export default function AddVehicleModal({ isOpen, onClose, onSuccess, vehicleToE
         transmission: vehicleToEdit.transmission || 'Automatic',
         seats: (vehicleToEdit.seats || 5).toString(),
         availabilityStatus: vehicleToEdit.availabilityStatus || 'available',
-        images: vehicleToEdit.images || []
+        images: vehicleToEdit.images || [],
+        plateNumber: vehicleToEdit.plateNumber || '',
+        ownershipBookUrl: vehicleToEdit.ownershipBookUrl || '',
+        insuranceCertUrl: vehicleToEdit.insuranceCertUrl || '',
+        nationalIdUrl: vehicleToEdit.nationalIdUrl || '',
       });
       
       const categories = ['Sedan', 'SUV', 'Luxury', 'Truck', 'Hatchback', 'Motorcycle'];
@@ -63,7 +71,11 @@ export default function AddVehicleModal({ isOpen, onClose, onSuccess, vehicleToE
         transmission: 'Automatic',
         seats: '5',
         availabilityStatus: 'available',
-        images: []
+        images: [],
+        plateNumber: '',
+        ownershipBookUrl: '',
+        insuranceCertUrl: '',
+        nationalIdUrl: '',
       });
       setShowCustomCategory(false);
       setCustomCategory('');
@@ -89,6 +101,25 @@ export default function AddVehicleModal({ isOpen, onClose, onSuccess, vehicleToE
     }
   };
 
+  const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const { urls } = await vehicleService.uploadImages([file]);
+      setFormData(prev => ({ 
+        ...prev, 
+        [field]: urls[0]
+      }));
+    } catch (err: any) {
+      console.error('Upload failed:', err.message);
+      alert('Upload failed. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const removeImage = (index: number) => {
     setFormData(prev => ({
       ...prev,
@@ -100,17 +131,35 @@ export default function AddVehicleModal({ isOpen, onClose, onSuccess, vehicleToE
     e.preventDefault();
     setLoading(true);
     try {
+      const price = parseFloat(formData.pricePerDay);
+      const seatsCount = parseInt(formData.seats);
+
+      if (isNaN(price)) throw new Error('Please enter a valid price per day.');
+      if (isNaN(seatsCount)) throw new Error('Please enter a valid seat count.');
+
+      if (!vehicleToEdit) {
+        if (!formData.ownershipBookUrl) throw new Error('Ownership book is required.');
+        if (!formData.insuranceCertUrl) throw new Error('Insurance certification is required.');
+        if (!formData.nationalIdUrl) throw new Error('National ID is required.');
+        if (!formData.plateNumber) throw new Error('Plate number is required.');
+        if (formData.images.length === 0) throw new Error('At least one vehicle photo is required.');
+      }
+
       const vehicleRecord = {
         category: showCustomCategory ? customCategory : formData.category,
         name: formData.name,
         description: formData.description,
-        price_per_day: parseFloat(formData.pricePerDay),
+        price_per_day: price,
         location: formData.location,
         fuel_type: formData.fuelType,
         transmission: formData.transmission,
-        seats: parseInt(formData.seats),
+        seats: seatsCount,
         availability_status: formData.availabilityStatus,
-        images: formData.images
+        images: formData.images,
+        plate_number: formData.plateNumber,
+        ownership_book_url: formData.ownershipBookUrl,
+        insurance_cert_url: formData.insuranceCertUrl,
+        national_id_url: formData.nationalIdUrl,
       };
 
       if (vehicleToEdit) {
@@ -132,8 +181,9 @@ export default function AddVehicleModal({ isOpen, onClose, onSuccess, vehicleToE
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div key="add-vehicle-modal-overlay" className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <motion.div
+            key="add-vehicle-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -141,6 +191,7 @@ export default function AddVehicleModal({ isOpen, onClose, onSuccess, vehicleToE
             className="absolute inset-0 bg-black/80 backdrop-blur-md"
           />
           <motion.div
+            key={`add-vehicle-modal-container-${vehicleToEdit?.id || 'new'}`}
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -243,6 +294,19 @@ export default function AddVehicleModal({ isOpen, onClose, onSuccess, vehicleToE
                   />
                 </div>
 
+                {/* Plate Number */}
+                <div className="col-span-2 space-y-2">
+                  <label className="text-[10px] font-bold text-muted uppercase tracking-widest ml-1">Vehicle Plate Number *</label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="e.g. AA 2 12345"
+                    value={formData.plateNumber}
+                    onChange={e => setFormData({ ...formData, plateNumber: e.target.value })}
+                    className="w-full px-5 py-4 bg-dark-3 text-white border border-white/5 rounded-lg focus:border-gold outline-none transition-all placeholder:text-muted/20 text-sm uppercase"
+                  />
+                </div>
+
                 {/* Fuel Type */}
                 <div className="col-span-1 space-y-2">
                   <label className="text-[10px] font-bold text-muted uppercase tracking-widest ml-1">Fuel Type</label>
@@ -307,6 +371,76 @@ export default function AddVehicleModal({ isOpen, onClose, onSuccess, vehicleToE
                     <option value="available">Available</option>
                     <option value="unavailable">Unavailable / Maintenance</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Required Documentation */}
+              <div className="space-y-6 pt-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Info className="w-4 h-4 text-gold" />
+                  <h3 className="text-xs font-black text-white uppercase tracking-widest">Required Documentation</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Ownership Book */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-widest ml-1">Ownership Book (Libre) *</label>
+                    <div className={`relative px-4 py-8 rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-2 cursor-pointer ${
+                      formData.ownershipBookUrl ? 'border-gold/50 bg-gold/5' : 'border-white/5 hover:border-gold/30'
+                    }`}>
+                      <Upload className={`w-5 h-5 ${formData.ownershipBookUrl ? 'text-gold' : 'text-muted'}`} />
+                      <span className="text-[9px] font-bold text-white uppercase text-center">
+                        {formData.ownershipBookUrl ? 'Uploaded ✓' : 'Upload PDF/Image'}
+                      </span>
+                      <input 
+                        type="file" 
+                        required={!vehicleToEdit?.ownershipBookUrl}
+                        accept="image/*,.pdf"
+                        onChange={(e) => handleDocUpload(e, 'ownershipBookUrl')}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Insurance */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-widest ml-1">Insurance Certification *</label>
+                    <div className={`relative px-4 py-8 rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-2 cursor-pointer ${
+                      formData.insuranceCertUrl ? 'border-gold/50 bg-gold/5' : 'border-white/5 hover:border-gold/30'
+                    }`}>
+                      <Upload className={`w-5 h-5 ${formData.insuranceCertUrl ? 'text-gold' : 'text-muted'}`} />
+                      <span className="text-[9px] font-bold text-white uppercase text-center">
+                        {formData.insuranceCertUrl ? 'Uploaded ✓' : 'Upload PDF/Image'}
+                      </span>
+                      <input 
+                        type="file" 
+                        required={!vehicleToEdit?.insuranceCertUrl}
+                        accept="image/*,.pdf"
+                        onChange={(e) => handleDocUpload(e, 'insuranceCertUrl')}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  {/* National ID */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-widest ml-1">National ID / Fayda ID *</label>
+                    <div className={`relative px-4 py-8 rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-2 cursor-pointer ${
+                      formData.nationalIdUrl ? 'border-gold/50 bg-gold/5' : 'border-white/5 hover:border-gold/30'
+                    }`}>
+                      <Upload className={`w-5 h-5 ${formData.nationalIdUrl ? 'text-gold' : 'text-muted'}`} />
+                      <span className="text-[9px] font-bold text-white uppercase text-center">
+                        {formData.nationalIdUrl ? 'Uploaded ✓' : 'Upload PDF/Image'}
+                      </span>
+                      <input 
+                        type="file" 
+                        required={!vehicleToEdit?.nationalIdUrl}
+                        accept="image/*,.pdf"
+                        onChange={(e) => handleDocUpload(e, 'nationalIdUrl')}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
