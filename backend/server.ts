@@ -26,6 +26,9 @@ async function startServer() {
   // API Routes
   app.use("/api", apiRoutes);
 
+  // Serve uploaded files statically
+  app.use("/uploads", express.static(path.join(process.cwd(), 'uploads')));
+
   // Global Error Handler for API
   app.use("/api", (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error('[API Error]', err);

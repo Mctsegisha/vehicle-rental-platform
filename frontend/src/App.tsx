@@ -79,7 +79,7 @@ export default function App() {
         <footer className="bg-dark-1 border-t border-gold/10 py-20 px-6 mt-auto">
           <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-24">
             <div className="lg:col-span-1">
-              <h3 className="text-3xl font-display font-black tracking-tight text-white mb-6 uppercase">DriveFleet.</h3>
+              <h3 className="text-3xl font-display font-black tracking-tight text-white mb-6 uppercase">Ethiovehicles Rent.</h3>
               <p className="text-sm text-white/50 leading-relaxed max-w-sm font-medium">
                 The premier vehicle ecosystem in Ethiopia. 
                 Bridging expectations with exceptional mobility solutions.
@@ -95,7 +95,7 @@ export default function App() {
             </div>
             <div>
               <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold mb-8">Connect</h4>
-              <p className="text-white/60 font-medium text-[11px] mb-8 uppercase tracking-widest">support@drivefleet.com</p>
+              <p className="text-white/60 font-medium text-[11px] mb-8 uppercase tracking-widest">support@ethiovehiclesrent.com</p>
               <div className="flex gap-4">
                 <div className="w-10 h-10 rounded-full border border-gold/20 flex items-center justify-center text-gold hover:bg-gold hover:text-dark hover:scale-110 transition-all duration-300 cursor-pointer">
                   𝕏

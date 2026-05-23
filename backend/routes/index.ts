@@ -35,7 +35,13 @@ router.post('/upload', authenticate, (req: any, res: any, next: any) => {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'No files uploaded' });
     }
-    const urls = req.files.map((file: any) => file.path);
+    const urls = req.files.map((file: any) => {
+      // If it's a Cloudinary upload, path is a full URL. If local disk storage, return relative web path.
+      if (file.path && (file.path.startsWith('http://') || file.path.startsWith('https://'))) {
+        return file.path;
+      }
+      return `/uploads/${file.filename}`;
+    });
     res.json({ urls });
   });
 });

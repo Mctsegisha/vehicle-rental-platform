@@ -48,7 +48,7 @@ export default function Contact() {
 
             <div className="space-y-8">
               <h2 className="text-xl font-display font-black text-white uppercase tracking-tight">
-                DriveFleet Support
+                Ethiovehicles Rent Support
               </h2>
               <p className="text-muted leading-relaxed max-w-sm">
                 Our team is available to assist customers and vehicle owners with bookings, payments, and any platform-related questions.
@@ -66,7 +66,7 @@ export default function Contact() {
                   <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gold group-hover:border-gold/40 transition-all shrink-0">
                     <Mail className="w-5 h-5" />
                   </div>
-                  <p className="text-white font-bold text-sm">support@drivefleet.et</p>
+                  <p className="text-white font-bold text-sm">support@ethiovehiclesrent.com</p>
                 </div>
 
                 <div className="flex items-center gap-4 group">

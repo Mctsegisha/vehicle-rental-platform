@@ -315,7 +315,7 @@ export default function Home({ user, onAuthClick }: HomeProps) {
 
       <footer className="max-w-7xl mx-auto px-6 border-t border-gold/15 py-12 text-center text-muted">
         <p className="text-sm font-medium">
-          © 2026 <span className="text-gold font-bold">DriveFleet</span> · Built for Addis Ababa University School of Commerce · All rights reserved.
+          © 2026 <span className="text-gold font-bold">Ethiovehicles Rent</span> · Built for Addis Ababa University School of Commerce · All rights reserved.
         </p>
       </footer>
 

@@ -24,7 +24,7 @@ export default function Header({ user, onAuthClick, onLogout }: HeaderProps) {
     <header className="bg-dark/92 backdrop-blur-lg border-b border-gold/15 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         <Link to="/" className="flex items-center group">
-          <span className="text-2xl font-display font-black tracking-tight text-white">Drive<span className="text-gold">Fleet</span></span>
+          <span className="text-2xl font-display font-black tracking-tight text-white">Ethiovehicles <span className="text-gold">Rent</span></span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-10">

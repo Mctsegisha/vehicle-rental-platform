@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Filter, SlidersHorizontal, AlertCircle } from 'lucide-react';
+import { MapPin, Filter, SlidersHorizontal, AlertCircle } from 'lucide-react';
 import { vehicleService } from '../services/vehicleService';
 import { Vehicle, UserProfile } from '../types';
 import VehicleCard from '../components/vehicles/VehicleCard';
@@ -16,7 +16,7 @@ export default function Vehicles({ user, onAuthClick }: VehiclesProps) {
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState('');
+  const [locationSearch, setLocationSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('available');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [minPrice, setMinPrice] = useState<string>('');
@@ -75,15 +75,12 @@ export default function Vehicles({ user, onAuthClick }: VehiclesProps) {
   };
 
   const filteredVehicles = useMemo(() => {
-    if (!filter) return vehicles;
-    const query = filter.toLowerCase();
+    if (!locationSearch) return vehicles;
+    const query = locationSearch.toLowerCase();
     return vehicles.filter(v => 
-      v.category.toLowerCase().includes(query) ||
-      v.name.toLowerCase().includes(query) ||
-      v.location.toLowerCase().includes(query) ||
-      v.description.toLowerCase().includes(query)
+      v.location.toLowerCase().includes(query)
     );
-  }, [vehicles, filter]);
+  }, [vehicles, locationSearch]);
 
   if (error) {
     return (
@@ -121,15 +118,15 @@ export default function Vehicles({ user, onAuthClick }: VehiclesProps) {
         <div className="bg-dark-2 p-6 sm:p-8 rounded-[14px] border border-gold/15 shadow-2xl">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
             <div className="space-y-3">
-              <label className="text-[11px] font-bold text-muted uppercase tracking-widest ml-1">Search Fleet</label>
+              <label className="text-[11px] font-bold text-muted uppercase tracking-widest ml-1">Location Search</label>
               <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-gold transition-colors" />
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-gold transition-colors" />
                 <input 
                   type="text" 
-                  placeholder="e.g. Toyota Corolla"
+                  placeholder="e.g. Addis Ababa"
                   className="w-full pl-11 pr-4 py-3.5 bg-dark-3 text-white border border-white/5 rounded-lg focus:border-gold outline-none transition-all placeholder:text-muted/40 text-sm font-medium"
-                  value={filter}
-                  onChange={e => setFilter(e.target.value)}
+                  value={locationSearch}
+                  onChange={e => setLocationSearch(e.target.value)}
                 />
               </div>
             </div>
@@ -217,7 +214,7 @@ export default function Vehicles({ user, onAuthClick }: VehiclesProps) {
             </p>
             <button 
               onClick={() => {
-                setFilter('');
+                setLocationSearch('');
                 setMinPrice('');
                 setMaxPrice('');
                 setCategoryFilter('all');
