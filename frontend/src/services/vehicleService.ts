@@ -1,4 +1,4 @@
-import { apiFetch } from '../lib/apiClient';
+import { apiFetch, API_BASE } from '../lib/apiClient';
 import { Vehicle } from '../types';
 
 export const vehicleService = {
@@ -21,7 +21,7 @@ export const vehicleService = {
     });
     
     const token = localStorage.getItem('token');
-    const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/upload`, {
+    const response = await fetch(`${API_BASE}/upload`, {
       method: 'POST',
       headers: {
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),

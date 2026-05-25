@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Shield, Upload, CheckCircle2 } from 'lucide-react';
 import { userService } from '../../services/userService';
 import { UserProfile } from '../../types';
+import { API_BASE } from '../../lib/apiClient';
 
 interface VerificationModalProps {
   user: UserProfile;
@@ -80,7 +81,7 @@ export default function VerificationModal({ user, isOpen, targetOwnerId, onClose
     formDataObj.append('images', file);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/upload`, {
+      const response = await fetch(`${API_BASE}/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -122,7 +123,7 @@ export default function VerificationModal({ user, isOpen, targetOwnerId, onClose
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-y-auto scroll-smooth">
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 overflow-y-auto scroll-smooth">
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
         onClick={onClose}
