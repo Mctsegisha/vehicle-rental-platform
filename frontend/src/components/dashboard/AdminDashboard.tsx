@@ -208,7 +208,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           </p>
         </div>
 
-        <nav className="flex flex-wrap gap-1 bg-white/5 p-1 rounded-2xl border border-white/5">
+        <nav className="flex gap-1 bg-white/5 p-1 rounded-2xl border border-white/5 overflow-x-auto whitespace-nowrap custom-scrollbar">
           {[
             { id: 'overview', icon: LayoutDashboard },
             { id: 'users', icon: Users },

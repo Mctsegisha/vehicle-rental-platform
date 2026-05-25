@@ -328,21 +328,21 @@ export default function Header({ user, onAuthClick, onLogout }: HeaderProps) {
                   <Link
                     to="/"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-sm font-medium text-muted hover:text-gold transition-colors py-1.5"
+                    className="text-sm font-medium text-white hover:text-gold transition-colors py-1.5"
                   >
                     Home
                   </Link>
                   <Link
                     to="/vehicles"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-sm font-medium text-muted hover:text-gold transition-colors py-1.5"
+                    className="text-sm font-medium text-white hover:text-gold transition-colors py-1.5"
                   >
                     Browse Vehicles
                   </Link>
                   <Link
                     to="/contact"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-sm font-medium text-muted hover:text-gold transition-colors py-1.5"
+                    className="text-sm font-medium text-white hover:text-gold transition-colors py-1.5"
                   >
                     Contact
                   </Link>

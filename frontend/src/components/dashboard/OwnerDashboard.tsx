@@ -237,7 +237,7 @@ export default function OwnerDashboard({ user }: OwnerDashboardProps) {
           </p>
         </div>
 
-        <nav className="flex gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
+        <nav className="flex gap-1 bg-white/5 p-1 rounded-xl border border-white/5 overflow-x-auto whitespace-nowrap custom-scrollbar">
           {(['overview', 'vehicles', 'bookings', 'verifications', 'finance'] as TabType[]).map((tab) => (
             <button
               key={tab}
