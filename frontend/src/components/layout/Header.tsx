@@ -299,7 +299,7 @@ export default function Header({ user, onAuthClick, onLogout }: HeaderProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileMenuOpen(false)}
-              className="fixed inset-0 bg-dark/80 backdrop-blur-md z-40 md:hidden"
+              className="fixed inset-0 bg-[#0D0F14]/95 backdrop-blur-md z-[60] md:hidden"
             />
 
             {/* Drawer container */}
@@ -308,7 +308,7 @@ export default function Header({ user, onAuthClick, onLogout }: HeaderProps) {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-[300px] max-w-[85vw] bg-dark-2 border-l border-gold/15 p-6 shadow-2xl z-40 flex flex-col justify-between md:hidden pt-24"
+              className="fixed top-0 right-0 bottom-0 w-[300px] max-w-[85vw] bg-[#0D0F14] border-l border-gold/15 p-6 shadow-2xl z-[60] flex flex-col justify-between md:hidden pt-24"
             >
               {/* Navigation links & profile header */}
               <div className="space-y-8">
@@ -324,25 +324,25 @@ export default function Header({ user, onAuthClick, onLogout }: HeaderProps) {
                   </div>
                 )}
 
-                <nav className="flex flex-col gap-5">
+                <nav className="flex flex-col gap-3">
                   <Link
                     to="/"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-sm font-medium text-white hover:text-gold transition-colors py-1.5"
+                    className="block w-full px-5 py-4 bg-white/5 rounded-xl text-sm font-bold text-white hover:text-gold hover:bg-white/10 transition-all border border-white/5 active:scale-95"
                   >
                     Home
                   </Link>
                   <Link
                     to="/vehicles"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-sm font-medium text-white hover:text-gold transition-colors py-1.5"
+                    className="block w-full px-5 py-4 bg-white/5 rounded-xl text-sm font-bold text-white hover:text-gold hover:bg-white/10 transition-all border border-white/5 active:scale-95"
                   >
                     Browse Vehicles
                   </Link>
                   <Link
                     to="/contact"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-sm font-medium text-white hover:text-gold transition-colors py-1.5"
+                    className="block w-full px-5 py-4 bg-white/5 rounded-xl text-sm font-bold text-white hover:text-gold hover:bg-white/10 transition-all border border-white/5 active:scale-95"
                   >
                     Contact
                   </Link>
@@ -350,9 +350,9 @@ export default function Header({ user, onAuthClick, onLogout }: HeaderProps) {
                     <Link
                       to="/dashboard"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center gap-2 text-sm font-medium text-gold hover:underline transition-colors py-1.5"
+                      className="flex items-center gap-3 w-full px-5 py-4 bg-gold/10 rounded-xl text-sm font-bold text-gold hover:bg-gold/20 transition-all border border-gold/20 active:scale-95"
                     >
-                      <LayoutDashboard className="w-4 h-4 text-gold" />
+                      <LayoutDashboard className="w-5 h-5 text-gold" />
                       Dashboard
                     </Link>
                   )}
