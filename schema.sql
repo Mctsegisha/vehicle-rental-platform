@@ -1,4 +1,5 @@
 --- Cleanup ---
+DROP TABLE IF EXISTS Reviews;
 DROP TABLE IF EXISTS Payments;
 DROP TABLE IF EXISTS Bookings;
 DROP TABLE IF EXISTS Vehicles;
@@ -60,16 +61,29 @@ CREATE TABLE Payments (
     transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+--- Reviews Table ---
+CREATE TABLE Reviews (
+    review_id SERIAL PRIMARY KEY,
+    vehicle_id INTEGER REFERENCES Vehicles(vehicle_id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES Users(user_id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 --- Enable RLS ---
 ALTER TABLE Users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE Vehicles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE Bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE Payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE Reviews ENABLE ROW LEVEL SECURITY;
 
 --- Basic Policies (Public read for vehicles, restricted for others) ---
 CREATE POLICY "Public vehicles are viewable by everyone" ON Vehicles FOR SELECT USING (true);
 CREATE POLICY "Users can view their own data" ON Users FOR SELECT USING (auth.uid()::text = user_id::text);
 CREATE POLICY "Users can view their own bookings" ON Bookings FOR SELECT USING (auth.uid()::text = customer_id::text);
+CREATE POLICY "Public reviews are viewable by everyone" ON Reviews FOR SELECT USING (true);
+CREATE POLICY "Users can insert their own reviews" ON Reviews FOR INSERT WITH CHECK (auth.uid()::text = user_id::text);
 
 --- Initial Seed ---
 INSERT INTO Users (name, email, password, role) VALUES 
