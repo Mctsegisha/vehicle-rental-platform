@@ -95,7 +95,7 @@ export default function Home({ user, onAuthClick }: HomeProps) {
               transition={{ duration: 0.8 }}
             >
               <div className="section-tag">✦ Premium Vehicle Rentals</div>
-              <h1 className="text-5xl md:text-7xl font-display font-black text-white leading-[1.1] mb-8 tracking-tight">
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-display font-black text-white leading-[1.1] mb-8 tracking-tight">
                 Drive Your <br />
                 <span className="text-gold italic font-normal">Perfect Ride</span> <br />
                 Today
@@ -104,16 +104,16 @@ export default function Home({ user, onAuthClick }: HomeProps) {
                 Discover a wide range of quality vehicles — from passenger cars to industrial equipment. Book instantly, drive confidently.
               </p>
               
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 w-full">
                 <button 
                   onClick={() => navigate('/vehicles')}
-                  className="btn-primary"
+                  className="btn-primary w-full sm:w-auto text-center"
                 >
                   Browse Vehicles
                 </button>
                 <button 
                   onClick={handleListCarClick}
-                  className="btn-ghost"
+                  className="btn-ghost w-full sm:w-auto text-center"
                 >
                   List Your Car
                 </button>
@@ -124,7 +124,7 @@ export default function Home({ user, onAuthClick }: HomeProps) {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, delay: 0.2 }}
-              className="hidden lg:block relative"
+              className="relative w-full mt-6 lg:mt-0"
             >
               <div 
                 onClick={() => heroVehicle ? setIsHeroDetailsOpen(true) : navigate('/vehicles')}
@@ -290,7 +290,7 @@ export default function Home({ user, onAuthClick }: HomeProps) {
             </h2>
             <button 
               onClick={handleListCarClick}
-              className="btn-primary"
+              className="btn-primary w-full md:w-auto text-center"
             >
               List Your Car
             </button>
