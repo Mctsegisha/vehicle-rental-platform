@@ -5,7 +5,7 @@ dotenv.config({ override: true });
 
 const { Pool } = pg;
 
-const connectionString = process.env.DATABASE_URL || "postgresql://postgres:s1vWMxYX0kX9yL3g@db.qymlehvrmuhldctdhrcr.supabase.co:5432/postgres";
+const connectionString = process.env.DATABASE_URL || "postgresql://postgres.qymlehvrmuhldctdhrcr:s1vWMxYX0kX9yL3g@aws-1-eu-central-1.pooler.supabase.com:6543/postgres";
 
 if (connectionString) {
   const maskedUrl = connectionString.replace(/:[^@:]+@/, ':****@');
