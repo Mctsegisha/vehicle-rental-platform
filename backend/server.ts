@@ -7,6 +7,7 @@ import { createServer as createViteServer } from "vite";
 import cors from "cors";
 import apiRoutes from "./routes/index";
 import pool from "./config/db";
+import { startBookingAutoCancellationsJob } from "./jobs/bookingJob";
 
 async function startServer() {
   const app = express();
@@ -15,12 +16,29 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
-  // Check DB Connection
+  // Check DB Connection & Initialize schemas
   try {
     const res = await pool.query('SELECT NOW()');
     console.log('Database connected:', res.rows[0]);
+
+    // Create Notifications table if not existing
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS Notifications (
+        notification_id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES Users(user_id) ON DELETE CASCADE,
+        title VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        type VARCHAR(50) DEFAULT 'info',
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('Notifications database validation successful (table validated).');
+
+    // Start background auto-cancellations worker
+    startBookingAutoCancellationsJob();
   } catch (err) {
-    console.error('Database connection error:', err);
+    console.error('Database pre-flight check / initialization error:', err);
   }
 
   // API Routes

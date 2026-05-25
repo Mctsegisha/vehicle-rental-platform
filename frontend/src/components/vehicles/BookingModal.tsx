@@ -285,7 +285,7 @@ export default function BookingModal({ vehicle, isOpen, user: propUser, onClose,
                            <div className="grid grid-cols-2 gap-4">
                              <div className="space-y-1 text-xs">
                                <p className="text-[9px] font-bold text-muted uppercase tracking-widest">Account Holder</p>
-                               <p className="font-bold text-white">{bankDetails[paymentMethod].owner}</p>
+                               <p className="font-bold text-white">{vehicle.ownerName || bankDetails[paymentMethod].owner}</p>
                              </div>
                              <div className="space-y-1 text-right text-xs">
                                <p className="text-[9px] font-bold text-muted uppercase tracking-widest">Bank / Wallet</p>

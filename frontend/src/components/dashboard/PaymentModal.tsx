@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, CreditCard, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { X, CreditCard, CheckCircle2, AlertCircle, Clock, Copy, Check } from 'lucide-react';
 import { Booking } from '../../types';
 import { bookingService } from '../../services/bookingService';
 import { TelebirrLogo, CBELogo, BOALogo } from '../payment/PaymentLogos';
@@ -18,8 +18,15 @@ export default function PaymentModal({ booking, isOpen, onClose, onSuccess }: Pa
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<'payment' | 'success'>('payment');
+  const [copied, setCopied] = useState(false);
 
   if (!booking) return null;
+
+  const handleCopyAccount = (acc: string) => {
+    navigator.clipboard.writeText(acc);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const bankDetails = {
     telebirr: { name: 'Telebirr', account: '0911000000', owner: 'EthioRent LLC' },
@@ -173,36 +180,48 @@ export default function PaymentModal({ booking, isOpen, onClose, onSuccess }: Pa
                           className="bg-black/40 backdrop-blur-md p-8 rounded-lg border border-gold/20 space-y-6 mb-10 overflow-hidden"
                         >
                            <div className="flex items-center justify-between">
-                             <h4 className="text-[10px] font-black text-gold uppercase tracking-[0.2em] font-mono">Payment Details</h4>
+                             <h4 className="text-[10px] font-black text-gold uppercase tracking-[0.2em] font-mono">Payment Gateway</h4>
                              <div className="px-3 py-1 bg-gold/10 rounded text-[9px] font-black text-gold border border-gold/20 uppercase tracking-widest">Active</div>
                            </div>
 
-                           <div className="grid grid-cols-2 gap-6">
-                             <div className="space-y-1">
-                               <p className="text-[9px] font-bold text-muted uppercase tracking-widest">Beneficiary</p>
-                               <p className="text-xs font-black text-white uppercase tracking-tight">{bankDetails[paymentMethod].owner}</p>
+                           <div className="space-y-6">
+                             <div className="grid grid-cols-2 gap-6">
+                               <div className="space-y-1">
+                                 <p className="text-[9px] font-bold text-muted uppercase tracking-widest">Beneficiary (Provider)</p>
+                                 <p className="text-xs font-black text-white uppercase tracking-tight">{booking.ownerName || bankDetails[paymentMethod].owner}</p>
+                               </div>
+                               <div className="space-y-1 text-right">
+                                 <p className="text-[9px] font-bold text-muted uppercase tracking-widest">Institution</p>
+                                 <p className="text-xs font-black text-gold uppercase tracking-tight">{bankDetails[paymentMethod].name}</p>
+                               </div>
                              </div>
-                             <div className="space-y-1 text-right">
-                               <p className="text-[9px] font-bold text-muted uppercase tracking-widest">Institution</p>
-                               <p className="text-xs font-black text-gold uppercase tracking-tight">{bankDetails[paymentMethod].name}</p>
-                             </div>
-                           </div>
 
-                           <div className="p-6 bg-white/5 rounded-lg border border-white/5 flex items-center justify-between group cursor-pointer active:scale-95 transition-all">
-                             <div className="space-y-2">
-                               <p className="text-[9px] font-bold text-muted uppercase tracking-widest">Account Number</p>
-                               <p className="text-2xl font-mono font-black text-white tracking-[0.2em]">{bankDetails[paymentMethod].account}</p>
+                             <div 
+                               onClick={() => handleCopyAccount(bankDetails[paymentMethod].account)}
+                               className="p-6 bg-white/5 rounded-lg border border-white/5 flex items-center justify-between group cursor-pointer active:scale-95 transition-all hover:bg-white/10"
+                             >
+                               <div className="space-y-2">
+                                 <p className="text-[9px] font-bold text-muted uppercase tracking-widest">Account Number</p>
+                                 <p className="text-2xl font-mono font-black text-white tracking-[0.2em]">{bankDetails[paymentMethod].account}</p>
+                               </div>
+                               <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center text-gold group-hover:bg-gold group-hover:text-dark transition-all border border-gold/20 relative">
+                                 {copied ? (
+                                   <Check className="w-5 h-5" />
+                                 ) : (
+                                   <Copy className="w-4 h-4" />
+                                 )}
+                                 {copied && (
+                                   <span className="absolute -top-8 right-0 bg-gold text-dark text-[8px] font-black px-2 py-0.5 rounded shadow uppercase tracking-wider whitespace-nowrap">Copied!</span>
+                                 )}
+                               </div>
                              </div>
-                             <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center text-gold group-hover:bg-gold group-hover:text-dark transition-all border border-gold/20">
-                               <CreditCard className="w-5 h-5" />
-                             </div>
-                           </div>
 
-                           <div className="bg-gold/5 p-4 rounded-lg border border-gold/10 text-center">
-                             <p className="text-[10px] text-muted font-bold leading-relaxed uppercase tracking-wider">
-                               I. Open your banking app<br/>
-                               II. Transfer <span className="text-white font-black text-sm underline decoration-gold decoration-2 underline-offset-4 tracking-tighter">ETB {booking.totalAmount}</span>
-                             </p>
+                             <div className="bg-gold/5 p-4 rounded-lg border border-gold/10 text-center">
+                               <p className="text-[10px] text-muted font-bold leading-relaxed uppercase tracking-wider">
+                                 I. Open your banking app<br/>
+                                 II. Transfer <span className="text-white font-black text-sm underline decoration-gold decoration-2 underline-offset-4 tracking-tighter">ETB {booking.totalAmount}</span>
+                               </p>
+                             </div>
                            </div>
                         </motion.div>
                       )}

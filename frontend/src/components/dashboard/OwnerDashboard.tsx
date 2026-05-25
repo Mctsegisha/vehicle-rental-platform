@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, Car, ListChecks, DollarSign, Check, X, Edit2, 
   ShieldCheck, Trash2, ArrowUpRight, TrendingUp, Calendar,
-  Users, CreditCard, Activity, MapPin, Search, ChevronRight
+  Users, CreditCard, Activity, MapPin, Search, ChevronRight,
+  Download, FileText, AlertTriangle
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
@@ -15,6 +16,7 @@ import { userService } from '../../services/userService';
 import { paymentService } from '../../services/paymentService';
 import { Vehicle, Booking, UserProfile } from '../../types';
 import AddVehicleModal from '../vehicles/AddVehicleModal';
+import { exportToCSV, exportToPDF } from '../../utils/reportExporter';
 
 interface OwnerDashboardProps {
   user: UserProfile;
@@ -32,6 +34,9 @@ export default function OwnerDashboard({ user }: OwnerDashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [vehicleToEdit, setVehicleToEdit] = useState<Vehicle | null>(null);
+  const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const fetchData = async () => {
@@ -58,6 +63,45 @@ export default function OwnerDashboard({ user }: OwnerDashboardProps) {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleExportCSV = () => {
+    const headers = ['Reference', 'Vehicle Name', 'Transaction Date', 'Amount (ETB)', 'Status'];
+    const rows = payments.map(p => [
+      `PY_${String(p.id).padStart(4, '0')}`,
+      p.vehicleName || 'General',
+      new Date(p.createdAt).toLocaleDateString(),
+      `ETB ${p.amount.toLocaleString()}`,
+      p.paymentStatus.toUpperCase()
+    ]);
+    exportToCSV(headers, rows, `owner_finance_statement_${new Date().toISOString().split('T')[0]}`);
+  };
+
+  const handleExportPDF = () => {
+    const summaryMetrics = [
+      { label: 'Total Earnings', value: `ETB ${stats.totalEarnings.toLocaleString()}` },
+      { label: 'Platform Fee (5%)', value: `ETB ${(stats.totalEarnings * 0.05).toFixed(0).toLocaleString()}` },
+      { label: 'Net Revenue', value: `ETB ${(stats.totalEarnings * 0.95).toFixed(0).toLocaleString()}` }
+    ];
+    const tableHeaders = ['Reference', 'Vehicle', 'Date', 'Amount', 'Status'];
+    const tableRows = payments.map(p => [
+      `PY_${String(p.id).padStart(4, '0')}`,
+      (p.vehicleName || 'General').toUpperCase(),
+      new Date(p.createdAt).toLocaleDateString(),
+      `ETB ${p.amount.toLocaleString()}`,
+      p.paymentStatus.toUpperCase()
+    ]);
+    exportToPDF({
+      type: 'owner',
+      title: 'Provider Earnings Statement',
+      subtitle: 'Official transaction log of processed vehicle rentals and platform offsets.',
+      userName: user.name,
+      userEmail: user.email,
+      summaryMetrics,
+      tableHeaders,
+      tableRows,
+      fileName: `owner_earnings_statement_${new Date().toISOString().split('T')[0]}`
+    });
+  };
 
   const pendingStats = useMemo(() => {
     const pBookings = (bookings || []).filter(b => b.status === 'pending');
@@ -121,13 +165,23 @@ export default function OwnerDashboard({ user }: OwnerDashboardProps) {
     }
   };
 
-  const handleDeleteVehicle = async (id: number) => {
-    if (!window.confirm('Delete this vehicle and its history?')) return;
+  const handleDeleteVehicle = (v: Vehicle) => {
+    setDeleteError(null);
+    setVehicleToDelete(v);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!vehicleToDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
     try {
-      await vehicleService.deleteVehicle(id);
-      setVehicles(vehicles.filter(v => v.id !== id));
+      await vehicleService.deleteVehicle(vehicleToDelete.id);
+      setVehicles(vehicles.filter(v => v.id !== vehicleToDelete.id));
+      setVehicleToDelete(null);
     } catch (err: any) {
-      alert(err.message || 'Failed to delete');
+      setDeleteError(err.message || 'Failed to delete vehicle');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -446,7 +500,7 @@ export default function OwnerDashboard({ user }: OwnerDashboardProps) {
                     )}
                     <div className="absolute top-4 right-4 flex gap-2">
                        <button onClick={() => handleEditVehicle(v)} className="p-3 bg-dark/80 backdrop-blur-md rounded-xl text-gold border border-gold/20 hover:bg-gold hover:text-dark transition-all"><Edit2 className="w-4 h-4" /></button>
-                       <button onClick={() => handleDeleteVehicle(v.id)} className="p-3 bg-dark/80 backdrop-blur-md rounded-xl text-red-400 border border-red-400/20 hover:bg-red-400 hover:text-white transition-all"><Trash2 className="w-4 h-4" /></button>
+                       <button onClick={() => handleDeleteVehicle(v)} className="p-3 bg-dark/80 backdrop-blur-md rounded-xl text-red-400 border border-red-400/20 hover:bg-red-400 hover:text-white transition-all"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </div>
                   
@@ -739,7 +793,32 @@ export default function OwnerDashboard({ user }: OwnerDashboardProps) {
                 </div>
 
                 <div className="md:col-span-2 bg-dark-1/50 backdrop-blur-xl p-10 rounded-3xl border border-white/5 shadow-2xl">
-                  <h3 className="text-xl font-display font-black uppercase tracking-tight mb-8">Transaction Audit Trail</h3>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                     <div>
+                       <h3 className="text-xl font-display font-black uppercase tracking-tight">Transaction Audit Trail</h3>
+                       <p className="text-[10px] text-muted font-mono uppercase tracking-[0.2em] mt-1">Export transaction & earnings ledger</p>
+                     </div>
+                     <div className="flex gap-2.5">
+                       <button
+                         onClick={handleExportCSV}
+                         type="button"
+                         className="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest border border-white/10 hover:border-gold/30 rounded-xl text-muted hover:text-gold hover:bg-white/5 transition-all flex items-center gap-2 cursor-pointer"
+                         title="Download CSV Spreadsheet"
+                       >
+                         <Download className="w-3.5 h-3.5" />
+                         <span>CSV</span>
+                       </button>
+                       <button
+                         onClick={handleExportPDF}
+                         type="button"
+                         className="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest border border-gold/15 bg-gold/5 hover:bg-gold/10 hover:border-gold text-gold rounded-xl transition-all flex items-center gap-2 cursor-pointer"
+                         title="Download PDF statement"
+                       >
+                         <FileText className="w-3.5 h-3.5" />
+                         <span>PDF Statement</span>
+                       </button>
+                     </div>
+                  </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
@@ -784,6 +863,93 @@ export default function OwnerDashboard({ user }: OwnerDashboardProps) {
         onClose={() => {setIsAddModalOpen(false); setVehicleToEdit(null);}} 
         onSuccess={fetchData} 
       />
+
+      {/* Custom Delete Confirmation Modal */}
+      <AnimatePresence>
+        {vehicleToDelete && (
+          <div key="delete-modal-overlay" className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <motion.div
+              key="delete-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { if (!isDeleting) setVehicleToDelete(null); }}
+              className="absolute inset-0 bg-black/85 backdrop-blur-md"
+            />
+            <motion.div
+              key="delete-modal-container"
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative bg-dark-2 w-full max-w-md rounded-[14px] border border-red-500/10 shadow-3xl p-8 text-center space-y-6 overflow-hidden"
+            >
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 border border-red-500/20 mx-auto">
+                <AlertTriangle className="w-8 h-8" />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-xl font-display font-black text-white tracking-tight uppercase">Confirm Fleet Deletion</h3>
+                <p className="text-[10px] uppercase font-black tracking-wider text-muted font-mono">{vehicleToDelete.name}</p>
+              </div>
+
+              {/* Vehicle Preview Card inside Modal */}
+              <div className="relative aspect-[16/9] bg-dark-3 rounded-lg overflow-hidden border border-white/5 opacity-80">
+                {vehicleToDelete.images?.[0] ? (
+                  <img src={vehicleToDelete.images[0]} alt={vehicleToDelete.name} className="w-full h-full object-cover grayscale" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center opacity-10">
+                    <Car className="w-12 h-12" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-dark-2 to-transparent opacity-60" />
+                <div className="absolute bottom-3 left-3 text-left">
+                  <p className="text-xs font-black text-white">{vehicleToDelete.name}</p>
+                  <p className="text-[9px] text-muted font-mono">{vehicleToDelete.plateNumber}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 max-w-sm mx-auto">
+                <p className="text-[11px] text-muted leading-relaxed font-semibold uppercase tracking-wider">
+                  Are you absolutely sure you want to remove this vehicle from your fleet?
+                </p>
+                <p className="text-[9px] text-red-400 font-mono uppercase bg-red-500/5 py-2 px-3 rounded border border-red-500/10 inline-block leading-relaxed">
+                  ⚠️ This action is permanent. All historical reviews, bookings, and financial payment entries for this specific vehicle will be removed cascadingly.
+                </p>
+              </div>
+
+              {deleteError && (
+                <div className="p-4 bg-red-500/10 border border-red-500/15 text-red-500 rounded-xl text-[10px] font-black uppercase text-left tracking-wide leading-relaxed">
+                  ❌ Error: {deleteError}
+                </div>
+              )}
+
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => setVehicleToDelete(null)}
+                  className="flex-1 py-4 bg-white/5 hover:bg-white/10 text-muted hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer border border-white/5 disabled:opacity-50"
+                >
+                  No, Keep Vehicle
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleConfirmDelete}
+                  className="flex-[1.5] py-4 bg-red-500 hover:bg-red-600 active:scale-95 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xl shadow-red-500/10 disabled:opacity-50"
+                >
+                  {isDeleting ? (
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Trash2 className="w-3.5 h-3.5" />
+                  )}
+                  <span>{isDeleting ? 'Deleting...' : 'Yes, Delete Fleet'}</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

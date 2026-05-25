@@ -4,7 +4,7 @@ import {
   Users, FileText, CreditCard, ShieldCheck, AlertCircle, 
   Clock, CheckCircle2, XCircle, ChevronRight, Eye, Car, 
   TrendingUp, Search, Activity, Calendar, ArrowUpRight,
-  Filter, MoreHorizontal, LayoutDashboard
+  Filter, MoreHorizontal, LayoutDashboard, Download
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -15,6 +15,7 @@ import { userService } from '../../services/userService';
 import { adminService, AdminStats } from '../../services/adminService';
 import { bookingService } from '../../services/bookingService';
 import { Payment, UserProfile } from '../../types';
+import { exportToCSV, exportToPDF } from '../../utils/reportExporter';
 
 interface AdminDashboardProps {
   user: UserProfile;
@@ -65,6 +66,48 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleExportCSV = () => {
+    const headers = ['Transaction ID', 'Type', 'Revenue Collected (ETB)', 'Base Rate (%)', 'Provider Owner', 'Vehicle Resource', 'Status'];
+    const rows = commissions.map(c => [
+      `REC_${String(c.id).padStart(6, '0')}`,
+      c.type ? c.type.toUpperCase() : 'RENTAL',
+      `ETB ${c.amount.toFixed(2)}`,
+      `${c.rate}%`,
+      c.ownerName || 'Unknown Provider',
+      c.vehicleName || 'General Resource',
+      c.status ? c.status.toUpperCase() : 'VERIFIED'
+    ]);
+    exportToCSV(headers, rows, `admin_commissions_ledger_${new Date().toISOString().split('T')[0]}`);
+  };
+
+  const handleExportPDF = () => {
+    const totalCollected = commissions.reduce((sum, c) => sum + c.amount, 0);
+    const summaryMetrics = [
+      { label: 'Commissions Collected', value: `ETB ${totalCollected.toLocaleString()}` },
+      { label: 'Total Audits', value: String(commissions.length) },
+      { label: 'Avg Rate', value: '10.0% FLAT' }
+    ];
+    const tableHeaders = ['Transaction', 'Amount', 'Rate %', 'Provider / Vehicle', 'Audit Status'];
+    const tableRows = commissions.map(c => [
+      `REC_${String(c.id).padStart(6, '0')}`,
+      `ETB ${c.amount.toFixed(2)}`,
+      `${c.rate}%`,
+      `${c.ownerName || 'General'} (${c.vehicleName || 'General Platform'})`,
+      c.status ? c.status.toUpperCase() : 'VERIFIED'
+    ]);
+    exportToPDF({
+      type: 'admin',
+      title: 'Platform Commissions Ledger',
+      subtitle: 'Global platform operations audit, fee collections, and ledger settlements.',
+      userName: user.name,
+      userEmail: user.email,
+      summaryMetrics,
+      tableHeaders,
+      tableRows,
+      fileName: `admin_commissions_ledger_${new Date().toISOString().split('T')[0]}`
+    });
+  };
 
   const chartData = useMemo(() => {
     if (!bookings.length) return [];
@@ -628,14 +671,35 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                className="space-y-8"
             >
               <div className="bg-dark-1/50 backdrop-blur-xl rounded-3xl border border-white/5 shadow-2xl overflow-hidden font-sans">
-                <div className="p-10 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                <div className="p-10 border-b border-white/5 bg-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
                   <div>
                     <h3 className="text-xl font-display font-black text-gold uppercase tracking-tighter">Financial Ledger</h3>
-                    <p className="text-[10px] text-muted font-black uppercase tracking-widest mt-1">Platform Revenue Stream Audit</p>
+                    <p className="text-[10px] text-muted font-serif uppercase tracking-widest mt-1">Platform Revenue Stream Audit</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-2">Aggregate Collected</p>
-                    <p className="text-3xl font-display font-black text-white">ETB {commissions.reduce((sum, c) => sum + c.amount, 0).toLocaleString()}</p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      onClick={handleExportCSV}
+                      type="button"
+                      className="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest border border-white/10 hover:border-gold/30 rounded-xl text-muted hover:text-gold hover:bg-white/5 transition-all flex items-center gap-2 cursor-pointer"
+                      title="Download CSV Ledger"
+                    >
+                      <Download className="w-3.5 h-3.5 animate-pulse" />
+                      <span>Export CSV</span>
+                    </button>
+                    <button
+                      onClick={handleExportPDF}
+                      type="button"
+                      className="px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest border border-gold/15 bg-gold/5 hover:bg-gold/10 hover:border-gold text-gold rounded-xl transition-all flex items-center gap-2 cursor-pointer"
+                      title="Download PDF statement"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>PDF Audit Statement</span>
+                    </button>
+                    <div className="h-8 w-px bg-white/10 mx-2 hidden md:block" />
+                    <div className="text-left md:text-right">
+                      <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-1.5">Aggregate Collected</p>
+                      <p className="text-3xl font-display font-black text-white">ETB {commissions.reduce((sum, c) => sum + c.amount, 0).toLocaleString()}</p>
+                    </div>
                   </div>
                 </div>
                 <div className="overflow-x-auto">

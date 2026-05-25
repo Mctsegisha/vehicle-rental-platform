@@ -150,9 +150,30 @@ export const createVehicle = async (req: any, res: any) => {
       return res.status(400).json({ error: 'Passenger capacity must be a positive integer greater than 0' });
     }
 
-    // 4. Validate file extensions for uploaded URLs
-    if (!validateFileUrl(ownership_book_url) || !validateFileUrl(insurance_cert_url) || !validateFileUrl(national_id_url)) {
-      return res.status(400).json({ error: 'Uploaded documents must be in PDF, JPG, JPEG, or PNG format.' });
+    // 4. Validate mandatory document presence and correct file formats
+    if (!ownership_book_url || !ownership_book_url.trim()) {
+      return res.status(400).json({ error: 'Vehicle Ownership Book (Libre) photo or PDF is required.' });
+    }
+    if (!validateFileUrl(ownership_book_url)) {
+      return res.status(400).json({ error: 'Uploaded Ownership Book must be in PDF, JPG, JPEG, or PNG format.' });
+    }
+
+    if (!insurance_cert_url || !insurance_cert_url.trim()) {
+      return res.status(400).json({ error: 'Vehicle Insurance Certificate photo or PDF is required.' });
+    }
+    if (!validateFileUrl(insurance_cert_url)) {
+      return res.status(400).json({ error: 'Uploaded Insurance Certificate must be in PDF, JPG, JPEG, or PNG format.' });
+    }
+
+    if (!national_id_url || !national_id_url.trim()) {
+      return res.status(400).json({ error: 'National ID / Fayda ID photo or PDF is required.' });
+    }
+    if (!validateFileUrl(national_id_url)) {
+      return res.status(400).json({ error: 'Uploaded National ID / Fayda ID must be in PDF, JPG, JPEG, or PNG format.' });
+    }
+
+    if (!images || !Array.isArray(images) || images.length === 0 || !images[0]) {
+      return res.status(400).json({ error: 'At least one vehicle photo is required.' });
     }
 
     const result = await query(
@@ -227,9 +248,30 @@ export const updateVehicle = async (req: any, res: any) => {
       return res.status(400).json({ error: 'Passenger capacity must be a positive integer greater than 0' });
     }
 
-    // 4. Validate file extensions for uploaded URLs
-    if (!validateFileUrl(ownership_book_url) || !validateFileUrl(insurance_cert_url) || !validateFileUrl(national_id_url)) {
-      return res.status(400).json({ error: 'Uploaded documents must be in PDF, JPG, JPEG, or PNG format.' });
+    // 4. Validate mandatory document presence and correct file formats
+    if (!ownership_book_url || !ownership_book_url.trim()) {
+      return res.status(400).json({ error: 'Vehicle Ownership Book (Libre) photo or PDF is required.' });
+    }
+    if (!validateFileUrl(ownership_book_url)) {
+      return res.status(400).json({ error: 'Uploaded Ownership Book must be in PDF, JPG, JPEG, or PNG format.' });
+    }
+
+    if (!insurance_cert_url || !insurance_cert_url.trim()) {
+      return res.status(400).json({ error: 'Vehicle Insurance Certificate photo or PDF is required.' });
+    }
+    if (!validateFileUrl(insurance_cert_url)) {
+      return res.status(400).json({ error: 'Uploaded Insurance Certificate must be in PDF, JPG, JPEG, or PNG format.' });
+    }
+
+    if (!national_id_url || !national_id_url.trim()) {
+      return res.status(400).json({ error: 'National ID / Fayda ID photo or PDF is required.' });
+    }
+    if (!validateFileUrl(national_id_url)) {
+      return res.status(400).json({ error: 'Uploaded National ID / Fayda ID must be in PDF, JPG, JPEG, or PNG format.' });
+    }
+
+    if (!images || !Array.isArray(images) || images.length === 0 || !images[0]) {
+      return res.status(400).json({ error: 'At least one vehicle photo is required.' });
     }
 
     const result = await query(
@@ -284,6 +326,8 @@ export const deleteVehicle = async (req: any, res: any) => {
     }
 
     await query('DELETE FROM Reviews WHERE vehicle_id = $1', [vehicleId]);
+    await query('DELETE FROM Payments WHERE booking_id IN (SELECT booking_id FROM Bookings WHERE vehicle_id = $1)', [vehicleId]);
+    await query('DELETE FROM Commissions WHERE booking_id IN (SELECT booking_id FROM Bookings WHERE vehicle_id = $1) OR vehicle_id = $1', [vehicleId]);
     await query('DELETE FROM Bookings WHERE vehicle_id = $1', [vehicleId]);
     await query('DELETE FROM Vehicles WHERE vehicle_id = $1', [vehicleId]);
     

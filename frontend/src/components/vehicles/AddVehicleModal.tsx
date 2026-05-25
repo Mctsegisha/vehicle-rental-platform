@@ -34,6 +34,8 @@ export default function AddVehicleModal({ isOpen, onClose, onSuccess, vehicleToE
   const [customCategory, setCustomCategory] = useState('');
   const [uploading, setUploading] = useState(false);
 
+  const isMissingUploads = !formData.ownershipBookUrl || !formData.insuranceCertUrl || !formData.nationalIdUrl || formData.images.length === 0;
+
   useEffect(() => {
     setError(null);
     if (vehicleToEdit) {
@@ -180,40 +182,22 @@ export default function AddVehicleModal({ isOpen, onClose, onSuccess, vehicleToE
 
       if (!formData.name.trim()) throw new Error('Vehicle model name is required.');
       if (!formData.location.trim()) throw new Error('Location is required.');
-
-      const finalCategory = (showCustomCategory ? customCategory : formData.category).trim();
-      const categoryKey = finalCategory.toLowerCase();
-
-      // Graceful Vehicle Photos Fallback
-      let finalImages = [...formData.images];
-      if (finalImages.length === 0) {
-        let fallbackUrl = 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8'; // General elegant car
-        
-        if (categoryKey.includes('sedan')) {
-          fallbackUrl = 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341';
-        } else if (categoryKey.includes('suv')) {
-          fallbackUrl = 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf';
-        } else if (categoryKey.includes('luxury') || categoryKey.includes('sport')) {
-          fallbackUrl = 'https://images.unsplash.com/photo-1503376780353-7e6692767b70';
-        } else if (categoryKey.includes('truck') || categoryKey.includes('pickup')) {
-          fallbackUrl = 'https://images.unsplash.com/photo-1532581291347-9c39cf10a73c';
-        } else if (categoryKey.includes('hatchback')) {
-          fallbackUrl = 'https://images.unsplash.com/photo-1590362891991-f776e747a588';
-        } else if (categoryKey.includes('motorcycle') || categoryKey.includes('bike')) {
-          fallbackUrl = 'https://images.unsplash.com/photo-1558981806-ec527fa84c39';
-        }
-        fallbackUrl += '?format=jpg&ext=.jpg';
-        finalImages = [fallbackUrl];
+      if (!formData.plateNumber.trim()) throw new Error('Vehicle plate number is required.');
+      
+      if (!formData.ownershipBookUrl) {
+        throw new Error('Vehicle Ownership Book (Libre) is required. Please upload the document.');
+      }
+      if (!formData.insuranceCertUrl) {
+        throw new Error('Insurance Certification is required. Please upload the document.');
+      }
+      if (!formData.nationalIdUrl) {
+        throw new Error('National ID / Fayda ID is required. Please upload the document.');
+      }
+      if (formData.images.length === 0) {
+        throw new Error('At least one vehicle photo is required. Please upload a photo.');
       }
 
-      // Plate number auto-generation if blank
-      const finalPlateNumber = formData.plateNumber.trim() || `ET-3-A${Math.floor(10000 + Math.random() * 90000)}`;
-
-      // Document placeholders fallback (ensures backend URL validation .jpg succeeds)
-      const fallbackDocUrl = 'https://res.cloudinary.com/demo/image/upload/sample.jpg';
-      const finalOwnershipUrl = formData.ownershipBookUrl || fallbackDocUrl;
-      const finalInsuranceUrl = formData.insuranceCertUrl || fallbackDocUrl;
-      const finalNationalIdUrl = formData.nationalIdUrl || fallbackDocUrl;
+      const finalCategory = (showCustomCategory ? customCategory : formData.category).trim();
 
       const vehicleRecord = {
         category: finalCategory,
@@ -225,11 +209,11 @@ export default function AddVehicleModal({ isOpen, onClose, onSuccess, vehicleToE
         transmission: formData.transmission,
         seats: seatsCount,
         availability_status: formData.availabilityStatus,
-        images: finalImages,
-        plate_number: finalPlateNumber,
-        ownership_book_url: finalOwnershipUrl,
-        insurance_cert_url: finalInsuranceUrl,
-        national_id_url: finalNationalIdUrl,
+        images: formData.images,
+        plate_number: formData.plateNumber.trim(),
+        ownership_book_url: formData.ownershipBookUrl,
+        insurance_cert_url: formData.insuranceCertUrl,
+        national_id_url: formData.nationalIdUrl,
       };
 
       if (vehicleToEdit) {
@@ -565,18 +549,34 @@ export default function AddVehicleModal({ isOpen, onClose, onSuccess, vehicleToE
               </div>
 
               {/* Submit Button */}
-              <div className="pt-8 border-t border-white/5">
+              <div className="pt-8 border-t border-white/5 space-y-4">
+                {isMissingUploads && (
+                  <div className="p-4 rounded-xl border border-gold/10 bg-gold/5 flex gap-3 text-gold/80 text-xs">
+                    <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="font-bold uppercase tracking-wider text-[10px] text-gold">Mandatory Requirements Missing</p>
+                      <p className="leading-relaxed">To list your car, please upload the following mandatory documents & pictures:</p>
+                      <ul className="list-disc list-inside space-y-0.5 opacity-80 mt-1 font-medium">
+                        {formData.images.length === 0 && <li>At least one vehicle photo</li>}
+                        {!formData.ownershipBookUrl && <li>Vehicle Ownership Book (Libre)</li>}
+                        {!formData.insuranceCertUrl && <li>Insurance Certificate</li>}
+                        {!formData.nationalIdUrl && <li>National ID / Fayda ID</li>}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
                 <button
-                  disabled={loading || uploading}
+                  disabled={loading || uploading || isMissingUploads}
                   type="submit"
-                  className="btn-primary w-full py-5 text-sm uppercase tracking-widest disabled:opacity-30"
+                  className="btn-primary w-full py-5 text-sm uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-gold/25"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center gap-3">
                       <div className="w-4 h-4 border-2 border-dark/30 border-t-dark rounded-full animate-spin" />
                       <span>Saving...</span>
                     </div>
-                  ) : (uploading ? 'Uploading Photos...' : (vehicleToEdit ? 'Save Changes' : 'Add Vehicle'))}
+                  ) : (uploading ? 'Uploading Files...' : (vehicleToEdit ? 'Save Changes' : 'Submit Listing'))}
                 </button>
               </div>
             </form>

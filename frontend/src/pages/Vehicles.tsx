@@ -5,6 +5,7 @@ import { vehicleService } from '../services/vehicleService';
 import { Vehicle, UserProfile } from '../types';
 import VehicleCard from '../components/vehicles/VehicleCard';
 import BookingModal from '../components/vehicles/BookingModal';
+import BookingWarningModal from '../components/vehicles/BookingWarningModal';
 
 interface VehiclesProps {
   user: UserProfile | null;
@@ -25,6 +26,7 @@ export default function Vehicles({ user, onAuthClick }: VehiclesProps) {
   // Booking State
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
 
   const fetchVehicles = async () => {
     try {
@@ -66,7 +68,7 @@ export default function Vehicles({ user, onAuthClick }: VehiclesProps) {
     
     // Only customers should be able to book
     if (user.role !== 'customer') {
-      alert('Only Customer accounts can book vehicles. Please log in with a customer account.');
+      setIsWarningModalOpen(true);
       return;
     }
 
@@ -233,6 +235,12 @@ export default function Vehicles({ user, onAuthClick }: VehiclesProps) {
         user={user}
         onClose={() => setIsBookingModalOpen(false)}
         onSuccess={fetchVehicles}
+      />
+
+      <BookingWarningModal 
+        isOpen={isWarningModalOpen}
+        onClose={() => setIsWarningModalOpen(false)}
+        role={user?.role}
       />
     </div>
   );

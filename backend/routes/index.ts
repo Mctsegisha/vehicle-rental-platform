@@ -5,6 +5,7 @@ import bookingRoutes from './bookings';
 import reviewRoutes from './reviews';
 import adminRoutes from './admin';
 import ownerRoutes from './owner';
+import notificationRoutes from './notifications';
 import { upload } from '../config/cloudinary';
 import { authenticate } from '../middleware/authMiddleware';
 
@@ -16,6 +17,7 @@ router.use('/bookings', bookingRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/admin', adminRoutes);
 router.use('/owner', ownerRoutes);
+router.use('/notifications', notificationRoutes);
 
 // Health check
 router.get('/health', (req, res) => {

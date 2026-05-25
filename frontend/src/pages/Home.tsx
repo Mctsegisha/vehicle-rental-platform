@@ -10,6 +10,7 @@ import { vehicleService } from '../services/vehicleService';
 import { Vehicle, UserProfile } from '../types';
 import VehicleCard from '../components/vehicles/VehicleCard';
 import VehicleDetailsModal from '../components/vehicles/VehicleDetailsModal';
+import BookingWarningModal from '../components/vehicles/BookingWarningModal';
 
 const BRANDS = [
   { name: "TOYOTA", icon: ShieldCheck },
@@ -36,6 +37,7 @@ export default function Home({ user, onAuthClick }: HomeProps) {
   const [loading, setLoading] = useState(true);
   const [showAccessDeniedModal, setShowAccessDeniedModal] = useState(false);
   const [isHeroDetailsOpen, setIsHeroDetailsOpen] = useState(false);
+  const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleListCarClick = () => {
@@ -67,7 +69,7 @@ export default function Home({ user, onAuthClick }: HomeProps) {
     }
 
     if (user.role !== 'customer') {
-      alert('Only Customer accounts can book vehicles. Please log in with a customer account.');
+      setIsWarningModalOpen(true);
       return;
     }
 
@@ -402,6 +404,12 @@ export default function Home({ user, onAuthClick }: HomeProps) {
           onBook={handleBook}
         />
       )}
+
+      <BookingWarningModal 
+        isOpen={isWarningModalOpen}
+        onClose={() => setIsWarningModalOpen(false)}
+        role={user?.role}
+      />
     </div>
   );
 }

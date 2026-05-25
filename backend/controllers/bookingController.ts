@@ -11,7 +11,8 @@ const mapBooking = (dbB: any) => ({
   paymentReference: dbB.payment_reference,
   createdAt: dbB.created_at,
   category: dbB.category,
-  vehicleName: dbB.name
+  vehicleName: dbB.name,
+  ownerName: dbB.owner_name
 });
 
 export const createBooking = async (req: any, res: any) => {
@@ -88,7 +89,14 @@ export const createBooking = async (req: any, res: any) => {
 
 export const getCustomerBookings = async (req: any, res: any) => {
     try {
-      const result = await query('SELECT b.*, v.category, v.name FROM Bookings b JOIN Vehicles v ON b.vehicle_id = v.vehicle_id WHERE b.customer_id = $1', [req.user.userId]);
+      const result = await query(
+        `SELECT b.*, v.category, v.name, u.name as owner_name 
+         FROM Bookings b 
+         JOIN Vehicles v ON b.vehicle_id = v.vehicle_id 
+         JOIN Users u ON v.owner_id = u.user_id 
+         WHERE b.customer_id = $1`, 
+        [req.user.userId]
+      );
       res.json(result.rows.map(mapBooking));
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -109,10 +117,10 @@ export const getOwnerBookings = async (req: any, res: any) => {
 
 export const updateBookingStatus = async (req: any, res: any) => {
   const { status, payment_reference, bookingId: bodyBookingId } = req.body;
-  const bookingId = req.params.id || bodyBookingId;
+  const bookingId = parseInt(String(req.params.id || bodyBookingId), 10);
   
-  if (!bookingId) {
-    return res.status(400).json({ error: 'Booking ID is required' });
+  if (isNaN(bookingId)) {
+    return res.status(400).json({ error: 'Valid Booking ID is required' });
   }
   
   try {
@@ -134,23 +142,71 @@ export const updateBookingStatus = async (req: any, res: any) => {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
+    let finalStatus = status;
+    if (status === 'approved') {
+      finalStatus = 'confirmed';
+      
+      // Auto-approve pending payment verification
+      const payRes = await query('SELECT * FROM Payments WHERE booking_id = $1', [bookingId]);
+      const bAmountRes = await query('SELECT total_amount FROM Bookings WHERE booking_id = $1', [bookingId]);
+      const amount = bAmountRes.rows[0]?.total_amount || 0;
+
+      if (payRes.rows.length === 0) {
+        await query(
+          'INSERT INTO Payments (booking_id, amount, payment_status, verified_by_admin) VALUES ($1, $2, $3, $4)',
+          [bookingId, amount, 'verified', true]
+        );
+      } else {
+        await query(
+          "UPDATE Payments SET payment_status = 'verified', verified_by_admin = TRUE WHERE booking_id = $1",
+          [bookingId]
+        );
+      }
+
+      // Calculate 5% Commission for Booking
+      const commCheck = await query('SELECT * FROM Commissions WHERE booking_id = $1', [bookingId]);
+      if (commCheck.rows.length === 0) {
+        const commissionAmount = parseFloat(amount) * 0.05;
+        await query(
+          'INSERT INTO Commissions (type, amount, booking_id, owner_id, rate) VALUES ($1, $2, $3, $4, $5)',
+          ['rental', commissionAmount, bookingId, bookingData.owner_id, 5.0]
+        );
+      }
+    }
+
     if (payment_reference) {
-      await query('UPDATE Bookings SET status = $1, payment_reference = $2 WHERE booking_id = $3', [status, payment_reference, bookingId]);
+      await query('UPDATE Bookings SET status = $1, payment_reference = $2 WHERE booking_id = $3', [finalStatus, payment_reference, bookingId]);
+      
+      // Upsert into Payments so that owners/admins see the payment for verification
+      const payRes = await query('SELECT * FROM Payments WHERE booking_id = $1', [bookingId]);
+      if (payRes.rows.length === 0) {
+        const bAmountRes = await query('SELECT total_amount FROM Bookings WHERE booking_id = $1', [bookingId]);
+        const amount = bAmountRes.rows[0]?.total_amount || 0;
+        await query(
+          'INSERT INTO Payments (booking_id, amount, payment_status, verified_by_admin) VALUES ($1, $2, $3, $4)',
+          [bookingId, amount, 'pending', false]
+        );
+      } else {
+        await query(
+          "UPDATE Payments SET payment_status = 'pending', verified_by_admin = FALSE WHERE booking_id = $1",
+          [bookingId]
+        );
+      }
     } else {
-      await query('UPDATE Bookings SET status = $1 WHERE booking_id = $2', [status, bookingId]);
+      await query('UPDATE Bookings SET status = $1 WHERE booking_id = $2', [finalStatus, bookingId]);
     }
 
     const bookingQuery = await query('SELECT vehicle_id FROM Bookings WHERE booking_id = $1', [bookingId]);
     if (bookingQuery.rows.length > 0) {
       const vId = bookingQuery.rows[0].vehicle_id;
-      if (['completed', 'rejected', 'cancelled'].includes(status)) {
+      if (['completed', 'rejected', 'cancelled'].includes(finalStatus)) {
         await query('UPDATE Vehicles SET availability_status = $1 WHERE vehicle_id = $2', ['available', vId]);
-      } else if (['confirmed', 'paid', 'approved'].includes(status)) {
+      } else if (['confirmed', 'paid', 'approved'].includes(finalStatus)) {
         await query('UPDATE Vehicles SET availability_status = $1 WHERE vehicle_id = $2', ['unavailable', vId]);
       }
     }
 
-    res.json({ success: true, status });
+    res.json({ success: true, status: finalStatus });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
