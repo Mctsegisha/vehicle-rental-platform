@@ -28,8 +28,10 @@ if (useCloudinary) {
     } as any,
   });
 } else {
-  // Local Disk Storage fallback
-  const uploadDir = path.join(process.cwd(), 'uploads');
+  // Local Disk Storage fallback - check whether we are running from root or backend directory
+  const uploadDir = fs.existsSync(path.join(process.cwd(), 'backend'))
+    ? path.join(process.cwd(), 'backend', 'uploads')
+    : path.join(process.cwd(), 'uploads');
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }

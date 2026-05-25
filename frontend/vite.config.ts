@@ -4,7 +4,11 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, path.resolve(__dirname, '..'), '');
+  // Load environment variables from the parent root folder or the frontend folder
+  const env = { 
+    ...loadEnv(mode, path.resolve(__dirname, '..'), ''), 
+    ...loadEnv(mode, path.resolve(__dirname), '') 
+  };
   return {
     root: __dirname,
     plugins: [react(), tailwindcss()],
@@ -14,7 +18,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      outDir: path.resolve(__dirname, '../dist'),
+      outDir: path.resolve(__dirname, 'dist'),
       emptyOutDir: true,
     },
     server: {
