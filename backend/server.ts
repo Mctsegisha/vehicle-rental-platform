@@ -97,16 +97,17 @@ async function startServer() {
       path.resolve(__dirname, "../dist"),
       path.resolve(__dirname, "dist")
     ];
-    const distPath = possibleDistPaths.find(p => fs.existsSync(p)) || path.join(process.cwd(), "dist");
+    // Find a path that contains index.html, to ensure it is actually the built frontend
+    const distPath = possibleDistPaths.find(p => fs.existsSync(path.join(p, "index.html")));
 
-    if (fs.existsSync(distPath)) {
+    if (distPath) {
       console.log(`[Server] Production: Serving static frontend files from ${distPath}`);
       app.use(express.static(distPath));
       app.get("*", (req, res) => {
         res.sendFile(path.join(distPath, "index.html"));
       });
     } else {
-      console.log("[Server] Production: Frontend static files not found. API-only mode active.");
+      console.log("[Server] Production: Frontend static index.html not found. API-only mode active.");
       app.get("/", (req, res) => {
         res.json({ 
           message: "Vehicle Rental Platform API is running",
