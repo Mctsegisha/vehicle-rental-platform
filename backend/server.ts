@@ -1,14 +1,25 @@
 import dotenv from 'dotenv';
 import path from "path";
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+// Secure ESM & CJS directory path resolver
+const getDirname = () => {
+  try {
+    return path.dirname(fileURLToPath(import.meta.url));
+  } catch (e) {
+    return __dirname;
+  }
+};
+const __dirnameSafe = getDirname();
 
 // Try to locate the .env file in potential locations relative to CWD or current file
 const possibleEnvPaths = [
   path.join(process.cwd(), '.env'),
   path.join(process.cwd(), 'backend', '.env'),
-  path.resolve(__dirname, '.env'),
-  path.resolve(__dirname, '../.env'),
-  path.resolve(__dirname, '../backend/.env')
+  path.resolve(__dirnameSafe, '.env'),
+  path.resolve(__dirnameSafe, '../.env'),
+  path.resolve(__dirnameSafe, '../backend/.env')
 ];
 const foundEnvPath = possibleEnvPaths.find(p => fs.existsSync(p));
 if (foundEnvPath) {
@@ -73,7 +84,7 @@ async function startServer() {
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     // Resolve frontend vite config relative to server.ts directory
-    const configPath = path.resolve(__dirname, '../frontend/vite.config.ts');
+    const configPath = path.resolve(__dirnameSafe, '../frontend/vite.config.ts');
     if (fs.existsSync(configPath)) {
       const { createServer: createViteServer } = await import('vite');
       const vite = await createViteServer({
@@ -94,8 +105,8 @@ async function startServer() {
     const possibleDistPaths = [
       path.join(process.cwd(), "dist"),
       path.join(process.cwd(), "backend", "dist"),
-      path.resolve(__dirname, "../dist"),
-      path.resolve(__dirname, "dist")
+      path.resolve(__dirnameSafe, "../dist"),
+      path.resolve(__dirnameSafe, "dist")
     ];
     // Find a path that contains index.html, to ensure it is actually the built frontend
     const distPath = possibleDistPaths.find(p => fs.existsSync(path.join(p, "index.html")));
