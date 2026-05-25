@@ -18,7 +18,6 @@ if (foundEnvPath) {
 }
 
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import cors from "cors";
 import apiRoutes from "./routes/index";
 import pool from "./config/db";
@@ -76,6 +75,7 @@ async function startServer() {
     // Resolve frontend vite config relative to server.ts directory
     const configPath = path.resolve(__dirname, '../frontend/vite.config.ts');
     if (fs.existsSync(configPath)) {
+      const { createServer: createViteServer } = await import('vite');
       const vite = await createViteServer({
         configFile: configPath,
         server: { middlewareMode: true },
