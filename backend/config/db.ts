@@ -5,12 +5,15 @@ dotenv.config({ override: true });
 
 const { Pool } = pg;
 
-const connectionString = process.env.DATABASE_URL || "postgresql://postgres.qymlehvrmuhldctdhrcr:s1vWMxYX0kX9yL3g@aws-1-eu-central-1.pooler.supabase.com:6543/postgres";
+const connectionString = process.env.DATABASE_URL;
 
-if (connectionString) {
-  const maskedUrl = connectionString.replace(/:[^@:]+@/, ':****@');
-  console.log('Initializing Database Pool with:', maskedUrl.substring(0, 50) + '...');
+if (!connectionString) {
+  console.error("CRITICAL ERROR: DATABASE_URL environment variable is not defined!");
+  process.exit(1);
 }
+
+const maskedUrl = connectionString.replace(/:[^@:]+@/, ':****@');
+console.log('Initializing Database Pool with:', maskedUrl.substring(0, 60) + '...');
 
 const pool = new Pool({
   connectionString,
