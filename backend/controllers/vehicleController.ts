@@ -59,6 +59,9 @@ export const getVehicles = async (req: any, res: any) => {
     let whereClauses = [];
     let params = [];
 
+    // Always exclude vehicles from deactivated (inactive) owner accounts
+    whereClauses.push(`u.status = 'active'`);
+
     if (activeStatus !== 'all') {
       whereClauses.push(`v.availability_status = $${params.length + 1}`);
       params.push(activeStatus);
@@ -79,18 +82,15 @@ export const getVehicles = async (req: any, res: any) => {
       params.push(parseFloat(maxPrice as string));
     }
 
-    const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-    
-    // Add approval status filter for public view if not admin
-    let finalQuery = `${baseQuery} ${whereString}`;
-    if (whereString) {
-      finalQuery += ` AND v.approval_status = 'approved'`;
-    } else {
-      finalQuery += ` WHERE v.approval_status = 'approved'`;
-    }
-    
+    // Build WHERE clause (always has at least the u.status = 'active' condition)
+    const whereString = `WHERE ${whereClauses.join(' AND ')}`;
+
+    // Add approval status filter — vehicles must be approved for public view
+    const finalQuery = `${baseQuery} ${whereString} AND v.approval_status = 'approved'${
+      limit ? ` LIMIT $${params.length + 1}` : ''
+    }`;
+
     if (limit) {
-      finalQuery += ` LIMIT $${params.length + 1}`;
       params.push(parseInt(limit as string));
     }
 
