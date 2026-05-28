@@ -35,6 +35,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [updatingUserId, setUpdatingUserId] = useState<number | null>(null);
 
   const fetchData = async () => {
     try {
@@ -141,8 +142,15 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
   const handleUpdateUserStatus = async (userId: number, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    await userService.updateUser(userId, { status: newStatus });
-    setUsers(users.map(u => u.userId === userId ? { ...u, status: newStatus } : u));
+    setUpdatingUserId(userId);
+    try {
+      await userService.updateUser(userId, { status: newStatus });
+      setUsers(users.map(u => u.userId === userId ? { ...u, status: newStatus } : u));
+    } catch (err: any) {
+      alert(`Failed to update user status: ${err.message || 'Unknown error'}`);
+    } finally {
+      setUpdatingUserId(null);
+    }
   };
 
   const handleToggleVerification = async (userId: number, currentVerified: boolean) => {
@@ -544,9 +552,18 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                           <td className="px-8 py-8 text-right">
                             <button 
                               onClick={() => handleUpdateUserStatus(u.userId!, u.status || 'active')}
-                              className="px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-white/10 hover:bg-white text-dark bg-white/5 transition-all"
+                              disabled={updatingUserId === u.userId}
+                              className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
+                                updatingUserId === u.userId
+                                  ? 'opacity-50 cursor-not-allowed border-white/5 text-muted bg-white/5'
+                                  : u.status === 'active'
+                                  ? 'border-red-500/30 text-red-400 bg-red-500/10 hover:bg-red-500 hover:text-white hover:border-red-500'
+                                  : 'border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500 hover:text-dark hover:border-green-500'
+                              }`}
                             >
-                              {u.status === 'active' ? 'Deactivate' : 'Activate'}
+                              {updatingUserId === u.userId
+                                ? '...'
+                                : u.status === 'active' ? 'Deactivate' : 'Activate'}
                             </button>
                           </td>
                         </tr>
@@ -753,62 +770,6 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             </motion.div>
           )}
 
-          {activeTab === 'users' && (
-            <div className="bg-dark-1 rounded-xl border border-white/5 shadow-2xl overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left font-sans">
-                  <thead className="bg-white/5 border-b border-white/5">
-                    <tr>
-                      <th className="px-8 py-6 text-[10px] font-bold text-muted uppercase tracking-widest">User Identity</th>
-                      <th className="px-8 py-6 text-[10px] font-bold text-muted uppercase tracking-widest">Role</th>
-                      <th className="px-8 py-6 text-[10px] font-bold text-muted uppercase tracking-widest">Status</th>
-                      <th className="px-8 py-6 text-[10px] font-bold text-muted uppercase tracking-widest">Verification</th>
-                      <th className="px-8 py-6 text-[10px] font-bold text-muted uppercase tracking-widest">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {users.map((u, i) => (
-                      <tr key={`user-row-${u.userId}-${i}`} className="hover:bg-white/5 transition-colors group">
-                        <td className="px-8 py-8">
-                          <div className="flex flex-col">
-                            <span className="text-sm font-black text-white group-hover:text-gold transition-colors uppercase">{u.name}</span>
-                            <span className="text-[10px] font-mono text-muted uppercase tracking-wider mt-1">{u.email}</span>
-                          </div>
-                        </td>
-                        <td className="px-8 py-8">
-                           <span className={`px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest border ${
-                             u.role === 'admin' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 
-                             u.role === 'owner' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-white/10 text-muted border-white/10'
-                           }`}>
-                             {u.role}
-                           </span>
-                        </td>
-                        <td className="px-8 py-8">
-                          <span className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${u.status === 'active' ? 'text-green-400' : 'text-red-400'}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${u.status === 'active' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
-                            {u.status}
-                          </span>
-                        </td>
-                        <td className="px-8 py-8">
-                           <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest border border-white/5 rounded-full text-muted ${u.isVerified ? '!bg-green-500/10 !text-green-400 !border-green-500/20' : ''}`}>
-                             {u.isVerified ? 'Verified' : 'Unverified'}
-                           </span>
-                        </td>
-                        <td className="px-8 py-8">
-                          <button 
-                            onClick={() => handleUpdateUserStatus(u.userId!, u.status || 'active')} 
-                            className="text-gold hover:text-white text-[10px] font-black uppercase tracking-widest underline underline-offset-4 decoration-gold/30 hover:decoration-white/30 transition-all font-mono"
-                          >
-                            {u.status === 'active' ? 'Deactivate' : 'Activate'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
 
           {activeTab === 'bookings' && (
             <motion.div 

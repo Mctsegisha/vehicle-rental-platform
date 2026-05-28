@@ -124,6 +124,12 @@ export const login = async (req: any, res: any) => {
     
     if (isMatch) {
       const user = mapUser(dbUser);
+
+      // Block deactivated accounts from logging in
+      if (user.status === 'inactive') {
+        return res.status(403).json({ error: 'Your account has been deactivated. Please contact support.' });
+      }
+
       const token = jwt.sign({ userId: user.userId, role: user.role }, JWT_SECRET);
       res.json({ user, token });
     } else {
